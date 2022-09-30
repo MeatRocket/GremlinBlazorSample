@@ -4,375 +4,369 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using System.Net.Http;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.Web.Virtualization;
-using Microsoft.JSInterop;
-using GremlinBlazorSample;
-using GremlinBlazorSample.Shared;
 using Microsoft.Azure.Cosmos;
 using Gremlin.Net.Driver;
 using Gremlin.Net.Structure.IO.GraphSON;
 using System.Net.WebSockets;
-using Gremlin.Net.Structure.IO;
 using Newtonsoft.Json;
-using System.Collections;
-using Microsoft.AspNetCore.Http;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel.DataCollection;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow;
-using static GremlinBlazorSample.Pages.Index;
 using System.Reflection;
+using AngryMonkey.Cloud.GraphDB;
 
 namespace GremlinBlazorSample.Pages
 {
-    public partial class Index
-    {
-        //private static string Host = "graphdbdemo.gremlin.cosmos.azure.com:443/";
-        private static string DatabaseId = "DemoDB";
-        private static string ContainerId = "People";
-        private static string ConnectionString = "AccountEndpoint=https://mohammad-graph-test.documents.azure.com:443/;AccountKey=2wT4Iw5W7j2jKOzSzebJYKHFxVr8KJ7G39a025sKRdQIDEM9QhK5htbhKCaGaUKksdbc2JVQZrLFcy6UKMZ71Q==;ApiKind=Gremlin;";
-        private static string Host = "mohammad-graph-test.gremlin.cosmos.azure.com:443/";
-        private static string GremlinPK = "2wT4Iw5W7j2jKOzSzebJYKHFxVr8KJ7G39a025sKRdQIDEM9QhK5htbhKCaGaUKksdbc2JVQZrLFcy6UKMZ71Q==";
-        protected Container Container { get; set; }
-        string containerLink = "/dbs/" + DatabaseId + "/colls/" + ContainerId;
+	public partial class Index
+	{
+		//private static string Host = "graphdbdemo.gremlin.cosmos.azure.com:443/";
+		private static string DatabaseId = "DemoDB";
+		private static string ContainerId = "AngryGraph";
+		private static string ConnectionString = "AccountEndpoint=https://mohammad-graph-test.documents.azure.com:443/;AccountKey=2wT4Iw5W7j2jKOzSzebJYKHFxVr8KJ7G39a025sKRdQIDEM9QhK5htbhKCaGaUKksdbc2JVQZrLFcy6UKMZ71Q==;ApiKind=Gremlin;";
+		private static string Host = "mohammad-graph-test.gremlin.cosmos.azure.com:443/";
+		private static string GremlinPK = "2wT4Iw5W7j2jKOzSzebJYKHFxVr8KJ7G39a025sKRdQIDEM9QhK5htbhKCaGaUKksdbc2JVQZrLFcy6UKMZ71Q==";
+		protected Container Container { get; set; }
+		string containerLink = "/dbs/" + DatabaseId + "/colls/" + ContainerId;
+
+		public string GenerateID(string label)
+		{
+			Guid Id = new();
+			return label + Id;
+		}
+		bool Started { get; set; } = false;
 
+		private static bool EnableSSL
+		{
+			get
+			{
+				if (Environment.GetEnvironmentVariable("EnableSSL") == null)
+					return true;
 
-        public string GenerateID(string label)
-        {
-            Guid Id = new();
-            return label + Id;
-        }
-        bool Started { get; set; } = false;
+				if (!bool.TryParse(Environment.GetEnvironmentVariable("EnableSSL"), out bool value))
+					throw new ArgumentException("Invalid env var: EnableSSL is not a boolean");
 
-        private static bool EnableSSL
-        {
-            get
-            {
-                if (Environment.GetEnvironmentVariable("EnableSSL") == null)
-                    return true;
+				return value;
+			}
+		}
 
-                if (!bool.TryParse(Environment.GetEnvironmentVariable("EnableSSL"), out bool value))
-                    throw new ArgumentException("Invalid env var: EnableSSL is not a boolean");
+		ConnectionPoolSettings connectionPoolSettings = new()
+		{
+			MaxInProcessPerConnection = 10,
+			PoolSize = 30,
+			ReconnectionAttempts = 3,
+			ReconnectionBaseDelay = TimeSpan.FromMilliseconds(500)
+		};
 
-                return value;
-            }
-        }
+		public class Brand : BaseVertexRecord
+		{
+			public string Name { get; set; }
+		}
 
+		public async Task Add()
+		{
+			CloudGraphDbClient clougGraph = new (ConnectionString, DatabaseId, ContainerId, Host, GremlinPK);
+			await clougGraph.AddVertex(new Brand()
+			{
+				ID = Guid.NewGuid(),
+				Name = "Microsoft"
+			});
 
-        ConnectionPoolSettings connectionPoolSettings = new()
-        {
-            MaxInProcessPerConnection = 10,
-            PoolSize = 30,
-            ReconnectionAttempts = 3,
-            ReconnectionBaseDelay = TimeSpan.FromMilliseconds(500)
-        };
+			//Started = true;
+			//CosmosClient graphClient = new(ConnectionString);
+			//Database GraphDB = graphClient.GetDatabase(DatabaseId);
 
+			//Container = GraphDB.GetContainer(ContainerId);
 
-        public async Task Add()
-        {
+			//var webSocketConfiguration =
+			//new Action<ClientWebSocketOptions>(options =>
+			//{
+			//	options.KeepAliveInterval = TimeSpan.FromSeconds(10);
+			//});
 
-            Started = true;
-            CosmosClient graphClient = new(ConnectionString);
-            Database GraphDB = graphClient.GetDatabase(DatabaseId);
+			//GremlinServer gremlinServer = new(Host, graphClient.Endpoint.Port, enableSsl: EnableSSL, username: containerLink, password: GremlinPK);
 
-            Container = GraphDB.GetContainer(ContainerId);
 
-            var webSocketConfiguration =
-            new Action<ClientWebSocketOptions>(options =>
-            {
-                options.KeepAliveInterval = TimeSpan.FromSeconds(10);
-            });
+			//using GremlinClient gremlinClient = new(gremlinServer, new GraphSON2Reader(), new GraphSON2Writer(), GremlinClient.GraphSON2MimeType, connectionPoolSettings, webSocketConfiguration);
+			//try
+			//{
+			//	//var resultSet = gremlinClient.SubmitAsync<dynamic>("g.addV('person').property('id', 'Ahmad').property('firstName', 'Ahmad').property('age', 44).property('person', 'pk')").Result;
 
-            GremlinServer gremlinServer = new(Host, graphClient.Endpoint.Port, enableSsl: EnableSSL, username: containerLink, password: GremlinPK);
+			//	var resultSet = gremlinClient.SubmitAsync<dynamic>("g.V('thomas')").Result;
 
+			//	//var resultSet = gremlinClient.SubmitAsync<dynamic>("g.V().has(\"age\",44)").Result;
 
-            using GremlinClient gremlinClient = new(gremlinServer, new GraphSON2Reader(), new GraphSON2Writer(), GremlinClient.GraphSON2MimeType, connectionPoolSettings, webSocketConfiguration);
-            try
-            {
-                //var resultSet = gremlinClient.SubmitAsync<dynamic>("g.addV('person').property('id', 'Ahmad').property('firstName', 'Ahmad').property('age', 44).property('person', 'pk')").Result;
 
-                var resultSet = gremlinClient.SubmitAsync<dynamic>("g.V('thomas')").Result;
+			//	DisplayResultSet = string.Empty;
+			//	DisplayResult = string.Empty;
 
-                //var resultSet = gremlinClient.SubmitAsync<dynamic>("g.V().has(\"age\",44)").Result;
+			//	//foreach (var result in resultSet)
+			//	//    foreach (var item in result)
+			//	//    {
+			//	//        if(item.Key != "properties")
+			//	//        DisplayResult += $"Key: {item.Key} | Value: {item.Value} ||||";
+			//	//        else
+			//	//            foreach (var property in item.Value)
+			//	//            {
+			//	//                DisplayResult += $"@@ Property name: {property.Key} ! Property Value: {JsonConvert.SerializeObject(property.Value)} @@@";
+			//	//            }
+			//	//    }
 
+			//	//GraphRecord record = GraphRecord.Parse(resultSet.ToList()[0]);
 
-                DisplayResultSet = string.Empty;
-                DisplayResult = string.Empty;
+			//	var r = resultSet.ToList()[0] as Dictionary<string, object>;
+
+			//	var properties = r["properties"] as Dictionary<string, object>;
+
+			//	var age = properties["age"];
 
-                //foreach (var result in resultSet)
-                //    foreach (var item in result)
-                //    {
-                //        if(item.Key != "properties")
-                //        DisplayResult += $"Key: {item.Key} | Value: {item.Value} ||||";
-                //        else
-                //            foreach (var property in item.Value)
-                //            {
-                //                DisplayResult += $"@@ Property name: {property.Key} ! Property Value: {JsonConvert.SerializeObject(property.Value)} @@@";
-                //            }
-                //    }
+			//	var ageList = (age as IEnumerable<object>).ToList();
 
-                //GraphRecord record = GraphRecord.Parse(resultSet.ToList()[0]);
+			//	var ageValues = ageList[0] as Dictionary<string, object>;
 
-                var r = resultSet.ToList()[0] as Dictionary<string, object>;
+			//	VertexRecord record = VertexRecord.Parse(r);
 
-                var properties = r["properties"] as Dictionary<string, object>;
+			//	Person person = VertexRecord.Parse<Person>(r);
 
-                var age = properties["age"];
+			//	VertexRecord record1 = VertexRecord.GetbyID("thomas");
 
-                var ageList = (age as IEnumerable<object>).ToList();
+			//	Person person1 = VertexRecord.GetbyID<Person>("thomas");
 
-                var ageValues = ageList[0] as Dictionary<string, object>;
+			//	Person TestSubject = new() { firstName = "hannah" };
 
-                VertexRecord record = VertexRecord.Parse(r);
+			//	List<VertexRecord> vr = VertexRecord.FindVerticiesByAnyProperty<Person>(TestSubject);
 
-                Person person = VertexRecord.Parse<Person>(r);
+			//	//Console.WriteLine(r["id"]);
 
-                VertexRecord record1 = VertexRecord.GetbyID("thomas");
+			//	//Console.WriteLine($"ID :  {r["id"]}  | Label : {r["label"]}  |  Type : {r["type"]}");
 
-                Person person1 = VertexRecord.GetbyID<Person>("thomas");
+			//	//Console.WriteLine(GenerateID("person"));
 
-                Person TestSubject = new() { firstName = "hannah" };
 
-                List<VertexRecord> vr = VertexRecord.FindVerticiesByAnyProperty<Person>(TestSubject);
+			//	DisplayResultSet += PrintStatusAttributes(resultSet.StatusAttributes);
+			//}
+			//catch (Exception e)
+			//{
+			//	throw e;
+			//}
+			StateHasChanged();
 
-                //Console.WriteLine(r["id"]);
+		}
 
-                //Console.WriteLine($"ID :  {r["id"]}  | Label : {r["label"]}  |  Type : {r["type"]}");
+		public class PropertyClass
+		{
+			public string id { get; set; }
+			public string value { get; set; }
+		}
 
-                //Console.WriteLine(GenerateID("person"));
+		private static string PrintStatusAttributes(IReadOnlyDictionary<string, object> attributes)
+		{
+			return
+			$"\tStatusAttributes:" +
+			$"\t[\" Status Code :  {GetValueAsString(attributes, "x-ms-status-code")}\"]" +
+			$"\t[\" Total Time: {GetValueAsString(attributes, "x-ms-total-server-time-ms")}\"]" +
+			$"\t[\" RU Cost : {GetValueAsString(attributes, "x-ms-total-request-charge")}\"] ";
+		}
 
+		public static string GetValueAsString(IReadOnlyDictionary<string, object> dictionary, string key)
+		{
+			return JsonConvert.SerializeObject(GetValueOrDefault(dictionary, key));
+		}
 
-                DisplayResultSet += PrintStatusAttributes(resultSet.StatusAttributes);
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
-            StateHasChanged();
+		public static object GetValueOrDefault(IReadOnlyDictionary<string, object> dictionary, string key)
+		{
+			if (dictionary.ContainsKey(key))
+			{
+				return dictionary[key];
+			}
 
-        }
+			return null;
+		}
 
-        public class PropertyClass
-        {
-            public string id { get; set; }
-            public string value { get; set; }
-        }
 
-        private static string PrintStatusAttributes(IReadOnlyDictionary<string, object> attributes)
-        {
-            return
-            $"\tStatusAttributes:" +
-            $"\t[\" Status Code :  {GetValueAsString(attributes, "x-ms-status-code")}\"]" +
-            $"\t[\" Total Time: {GetValueAsString(attributes, "x-ms-total-server-time-ms")}\"]" +
-            $"\t[\" RU Cost : {GetValueAsString(attributes, "x-ms-total-request-charge")}\"] ";
-        }
+		public string DisplayResultSet { get; set; } = "";
 
-        public static string GetValueAsString(IReadOnlyDictionary<string, object> dictionary, string key)
-        {
-            return JsonConvert.SerializeObject(GetValueOrDefault(dictionary, key));
-        }
+		public string DisplayResult { get; set; } = "";
 
-        public static object GetValueOrDefault(IReadOnlyDictionary<string, object> dictionary, string key)
-        {
-            if (dictionary.ContainsKey(key))
-            {
-                return dictionary[key];
-            }
+		public record VertexRecord
+		{
+			public string ID { get; set; }
+			public string Label { get; set; }
+			public string Type { get; set; }
 
-            return null;
-        }
+			public List<VertexRecordProperty> Properties { get; set; }
 
+			public static VertexRecord? Parse(dynamic result)
+			{
+				var resultproperties = result["properties"] as Dictionary<string, object>;
+				VertexRecord graphRecord = new()
+				{
+					ID = result["id"],
+					Label = result["label"],
+					Type = result["type"]
+				};
 
-        public string DisplayResultSet { get; set; } = "";
+				graphRecord.Properties = new();
 
-        public string DisplayResult { get; set; } = "";
+				foreach (var property in resultproperties)
+				{
+					var prop = (property.Value as IEnumerable<object>).ToList();
+					var value = prop[0] as Dictionary<string, object>;
+					var value1 = value["value"];
+					graphRecord.Properties.Add(new()
+					{
+						ID = property.Key.ToString(),
+						Value = value1.ToString()
+					});
+				}
 
-        public record VertexRecord
-        {
-            public string ID { get; set; }
-            public string Label { get; set; }
-            public string Type { get; set; }
+				return graphRecord;
+			}
 
-            public List<VertexRecordProperty> Properties { get; set; }
+			public static VertexRecord GetbyID(string id)
+			{
+				string query = $"g.V(\'{id}\')";
 
-            public static VertexRecord? Parse(dynamic result)
-            {
-                var resultproperties = result["properties"] as Dictionary<string, object>;
-                VertexRecord graphRecord = new()
-                {
-                    ID = result["id"],
-                    Label = result["label"],
-                    Type = result["type"]
-                };
 
-                graphRecord.Properties = new();
+				//establishing connection
+				CosmosClient graphClient = new(ConnectionString);
+				Database GraphDB = graphClient.GetDatabase(DatabaseId);
 
-                foreach (var property in resultproperties)
-                {
-                    var prop = (property.Value as IEnumerable<object>).ToList();
-                    var value = prop[0] as Dictionary<string, object>;
-                    var value1 = value["value"];
-                    graphRecord.Properties.Add(new()
-                    {
-                        ID = property.Key.ToString(),
-                        Value = value1.ToString()
-                    });
-                }
+				var webSocketConfiguration =
+				new Action<ClientWebSocketOptions>(options =>
+				{
+					options.KeepAliveInterval = TimeSpan.FromSeconds(10);
+				});
 
-                return graphRecord;
-            }
+				ConnectionPoolSettings connectionPoolSettings = new()
+				{
+					MaxInProcessPerConnection = 10,
+					PoolSize = 30,
+					ReconnectionAttempts = 3,
+					ReconnectionBaseDelay = TimeSpan.FromMilliseconds(500)
+				};
 
-            public static VertexRecord GetbyID(string id)
-            {
-                string query = $"g.V(\'{id}\')";
+				GremlinServer gremlinServer = new(Host, graphClient.Endpoint.Port, enableSsl: EnableSSL, username: "/dbs/DemoDB/colls/People", password: GremlinPK);
 
+				using GremlinClient gremlinClient = new(gremlinServer, new GraphSON2Reader(), new GraphSON2Writer(), GremlinClient.GraphSON2MimeType, connectionPoolSettings, webSocketConfiguration);
 
-                //establishing connection
-                CosmosClient graphClient = new(ConnectionString);
-                Database GraphDB = graphClient.GetDatabase(DatabaseId);
+				var resultSet = gremlinClient.SubmitAsync<dynamic>(query).Result;
 
-                var webSocketConfiguration =
-                new Action<ClientWebSocketOptions>(options =>
-                {
-                    options.KeepAliveInterval = TimeSpan.FromSeconds(10);
-                });
+				var r = resultSet.ToList()[0] as Dictionary<string, object>;
 
-                ConnectionPoolSettings connectionPoolSettings = new()
-                {
-                    MaxInProcessPerConnection = 10,
-                    PoolSize = 30,
-                    ReconnectionAttempts = 3,
-                    ReconnectionBaseDelay = TimeSpan.FromMilliseconds(500)
-                };
+				return Parse(r);
+			}
 
-                GremlinServer gremlinServer = new(Host, graphClient.Endpoint.Port, enableSsl: EnableSSL, username: "/dbs/DemoDB/colls/People", password: GremlinPK);
+			public static T GetbyID<T>(string id)
+			{
+				string query = $"g.V(\'{id}\')";
 
-                using GremlinClient gremlinClient = new(gremlinServer, new GraphSON2Reader(), new GraphSON2Writer(), GremlinClient.GraphSON2MimeType, connectionPoolSettings, webSocketConfiguration);
 
-                var resultSet = gremlinClient.SubmitAsync<dynamic>(query).Result;
+				//establishing connection
+				CosmosClient graphClient = new(ConnectionString);
+				Database GraphDB = graphClient.GetDatabase(DatabaseId);
 
-                var r = resultSet.ToList()[0] as Dictionary<string, object>;
+				var webSocketConfiguration =
+				new Action<ClientWebSocketOptions>(options =>
+				{
+					options.KeepAliveInterval = TimeSpan.FromSeconds(10);
+				});
 
-                return Parse(r);
-            }
+				ConnectionPoolSettings connectionPoolSettings = new()
+				{
+					MaxInProcessPerConnection = 10,
+					PoolSize = 30,
+					ReconnectionAttempts = 3,
+					ReconnectionBaseDelay = TimeSpan.FromMilliseconds(500)
+				};
 
-            public static T GetbyID<T>(string id)
-            {
-                string query = $"g.V(\'{id}\')";
+				GremlinServer gremlinServer = new(Host, graphClient.Endpoint.Port, enableSsl: EnableSSL, username: "/dbs/DemoDB/colls/People", password: GremlinPK);
 
+				using GremlinClient gremlinClient = new(gremlinServer, new GraphSON2Reader(), new GraphSON2Writer(), GremlinClient.GraphSON2MimeType, connectionPoolSettings, webSocketConfiguration);
 
-                //establishing connection
-                CosmosClient graphClient = new(ConnectionString);
-                Database GraphDB = graphClient.GetDatabase(DatabaseId);
+				var resultSet = gremlinClient.SubmitAsync<dynamic>(query).Result;
 
-                var webSocketConfiguration =
-                new Action<ClientWebSocketOptions>(options =>
-                {
-                    options.KeepAliveInterval = TimeSpan.FromSeconds(10);
-                });
+				var r = resultSet.ToList()[0] as Dictionary<string, object>;
 
-                ConnectionPoolSettings connectionPoolSettings = new()
-                {
-                    MaxInProcessPerConnection = 10,
-                    PoolSize = 30,
-                    ReconnectionAttempts = 3,
-                    ReconnectionBaseDelay = TimeSpan.FromMilliseconds(500)
-                };
+				return Parse<T>(r);
+			}
 
-                GremlinServer gremlinServer = new(Host, graphClient.Endpoint.Port, enableSsl: EnableSSL, username: "/dbs/DemoDB/colls/People", password: GremlinPK);
+			public static T Parse<T>(dynamic result)
+			{
+				VertexRecord graphRecord = Parse(result);
 
-                using GremlinClient gremlinClient = new(gremlinServer, new GraphSON2Reader(), new GraphSON2Writer(), GremlinClient.GraphSON2MimeType, connectionPoolSettings, webSocketConfiguration);
+				T obj = (T)Activator.CreateInstance(typeof(T));
 
-                var resultSet = gremlinClient.SubmitAsync<dynamic>(query).Result;
+				foreach (VertexRecordProperty graphProperty in graphRecord.Properties)
+				{
+					PropertyInfo? propertyInfo = typeof(T).GetProperty(graphProperty.ID);
 
-                var r = resultSet.ToList()[0] as Dictionary<string, object>;
+					if (propertyInfo == null)
+						continue;
 
-                return Parse<T>(r);
-            }
+					propertyInfo.SetValue(obj, graphProperty.Value);
+				}
 
-            public static T Parse<T>(dynamic result)
-            {
-                VertexRecord graphRecord = Parse(result);
+				return obj;
+			}
 
-                T obj = (T)Activator.CreateInstance(typeof(T));
+			public static List<VertexRecord> FindVerticiesByAnyProperty<T>(T obj)
+			{
 
-                foreach (VertexRecordProperty graphProperty in graphRecord.Properties)
-                {
-                    PropertyInfo? propertyInfo = typeof(T).GetProperty(graphProperty.ID);
+				dynamic type = obj.GetType().GetProperties();
+				string query = "g.V()";
 
-                    if (propertyInfo == null)
-                        continue;
+				//string query = $"g.V().has(\'{key}\',\'{value}\')";
 
-                    propertyInfo.SetValue(obj, graphProperty.Value);
-                }
+				foreach (var item in type)
+				{
+					//if(obj.GetType().GetProperty(item.Name).GetValue(obj)!=null)
+					//    if(obj.GetType().GetProperty(item.Name).GetValue(obj).GetType()==)
+					//    query += $".has(\"{item.Name}\",{obj.GetType().GetProperty(item.Name).GetValue(obj)})";
+					Console.WriteLine($"Property Name :{item.Name}");
+					Console.WriteLine($"Property Value :{obj.GetType().GetProperty(item.Name).GetValue(obj)}");
+				}
+				Console.WriteLine(query);
 
-                return obj;
-            }
+				//establishing connection
+				//break here
+				CosmosClient graphClient = new(ConnectionString);
+				Database GraphDB = graphClient.GetDatabase(DatabaseId);
 
-            public static List<VertexRecord> FindVerticiesByAnyProperty<T>(T obj)
-            {
+				var webSocketConfiguration =
+				new Action<ClientWebSocketOptions>(options =>
+				{
+					options.KeepAliveInterval = TimeSpan.FromSeconds(10);
+				});
 
-                dynamic type = obj.GetType().GetProperties();
-                string query = "g.V()";
+				ConnectionPoolSettings connectionPoolSettings = new()
+				{
+					MaxInProcessPerConnection = 10,
+					PoolSize = 30,
+					ReconnectionAttempts = 3,
+					ReconnectionBaseDelay = TimeSpan.FromMilliseconds(500)
+				};
 
-                //string query = $"g.V().has(\'{key}\',\'{value}\')";
+				GremlinServer gremlinServer = new(Host, graphClient.Endpoint.Port, enableSsl: EnableSSL, username: "/dbs/DemoDB/colls/People", password: GremlinPK);
 
-                foreach (var item in type)
-                {
-                    //if(obj.GetType().GetProperty(item.Name).GetValue(obj)!=null)
-                    //    if(obj.GetType().GetProperty(item.Name).GetValue(obj).GetType()==)
-                    //    query += $".has(\"{item.Name}\",{obj.GetType().GetProperty(item.Name).GetValue(obj)})";
-                    Console.WriteLine($"Property Name :{item.Name}");
-                    Console.WriteLine($"Property Value :{obj.GetType().GetProperty(item.Name).GetValue(obj)}");
-                }
-                Console.WriteLine(query);
+				using GremlinClient gremlinClient = new(gremlinServer, new GraphSON2Reader(), new GraphSON2Writer(), GremlinClient.GraphSON2MimeType, connectionPoolSettings, webSocketConfiguration);
 
-                //establishing connection
-                //break here
-                CosmosClient graphClient = new(ConnectionString);
-                Database GraphDB = graphClient.GetDatabase(DatabaseId);
+				var resultSet = gremlinClient.SubmitAsync<dynamic>("").Result;
 
-                var webSocketConfiguration =
-                new Action<ClientWebSocketOptions>(options =>
-                {
-                    options.KeepAliveInterval = TimeSpan.FromSeconds(10);
-                });
+				var r = resultSet.ToList()[0] as Dictionary<string, object>;
 
-                ConnectionPoolSettings connectionPoolSettings = new()
-                {
-                    MaxInProcessPerConnection = 10,
-                    PoolSize = 30,
-                    ReconnectionAttempts = 3,
-                    ReconnectionBaseDelay = TimeSpan.FromMilliseconds(500)
-                };
+				List<VertexRecord> VR = new();
 
-                GremlinServer gremlinServer = new(Host, graphClient.Endpoint.Port, enableSsl: EnableSSL, username: "/dbs/DemoDB/colls/People", password: GremlinPK);
+				return VR;
+			}
+		}
 
-                using GremlinClient gremlinClient = new(gremlinServer, new GraphSON2Reader(), new GraphSON2Writer(), GremlinClient.GraphSON2MimeType, connectionPoolSettings, webSocketConfiguration);
+		public class Person
+		{
+			public string firstName { get; set; }
+			public string age { get; set; }
+		}
 
-                var resultSet = gremlinClient.SubmitAsync<dynamic>("").Result;
-
-                var r = resultSet.ToList()[0] as Dictionary<string, object>;
-
-                List<VertexRecord> VR = new();
-
-                return VR;
-            }
-        }
-
-        public class Person
-        {
-            public string firstName { get; set; }
-            public string age { get; set; }
-        }
-
-        public class VertexRecordProperty
-        {
-            public string ID { get; set; }
-            public string Value { get; set; }
-        }
-    }
+		public class VertexRecordProperty
+		{
+			public string ID { get; set; }
+			public string Value { get; set; }
+		}
+	}
 }
