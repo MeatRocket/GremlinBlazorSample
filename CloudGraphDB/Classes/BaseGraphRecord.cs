@@ -2,7 +2,7 @@
 
 namespace AngryMonkey.Cloud.GraphDB
 {
-	public class BaseVertexRecord
+	public class BaseGraphRecord
 	{
 		public Guid ID { get; set; }
 		internal string _VertexLabel => this.GetType().Name;
