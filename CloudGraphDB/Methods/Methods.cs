@@ -6,153 +6,145 @@ using System.Drawing.Drawing2D;
 using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace AngryMonkey.Cloud.GraphDB
 {
-    public class CloudGraphDbClient
-    {
-        public CosmosClient GraphClient { get; set; }
-        public Database GraphDatabase { get; set; }
-        public Container GraphContainer { get; set; }
-        private GremlinServer Gremlin { get; set; }
+	public class CloudGraphDbClient
+	{
+		public CosmosClient GraphClient { get; set; }
+		public Database GraphDatabase { get; set; }
+		public Container GraphContainer { get; set; }
+		private GremlinServer Gremlin { get; set; }
 
-        private string ContainerLink => $"/dbs/{GraphDatabase.Id}/colls/{GraphContainer.Id}";
-        private static bool EnableSSL
-        {
-            get
-            {
-                if (Environment.GetEnvironmentVariable("EnableSSL") == null)
-                    return true;
+		private string ContainerLink => $"/dbs/{GraphDatabase.Id}/colls/{GraphContainer.Id}";
+		private static bool EnableSSL
+		{
+			get
+			{
+				if (Environment.GetEnvironmentVariable("EnableSSL") == null)
+					return true;
 
-                if (!bool.TryParse(Environment.GetEnvironmentVariable("EnableSSL"), out bool value))
-                    return false;
+				if (!bool.TryParse(Environment.GetEnvironmentVariable("EnableSSL"), out bool value))
+					return false;
 
-                return value;
-            }
-        }
+				return value;
+			}
+		}
 
-        public CloudGraphDbClient(string connectionString, string databaseId, string containerId, string host, string gremlinkKey)
-        {
-            GraphClient = new(connectionString);
-            GraphDatabase = GraphClient.GetDatabase(databaseId);
-            GraphContainer = GraphDatabase.GetContainer(containerId);
+		public CloudGraphDbClient(string connectionString, string databaseId, string containerId, string host, string gremlinkKey)
+		{
+			GraphClient = new(connectionString);
+			GraphDatabase = GraphClient.GetDatabase(databaseId);
+			GraphContainer = GraphDatabase.GetContainer(containerId);
 
-            Gremlin = new(host, GraphClient.Endpoint.Port, enableSsl: EnableSSL, username: ContainerLink, password: gremlinkKey);
-        }
+			Gremlin = new(host, GraphClient.Endpoint.Port, enableSsl: EnableSSL, username: ContainerLink, password: gremlinkKey);
+		}
 
-        private GremlinClient Client
-        {
-            get
-            {
-                Action<ClientWebSocketOptions> webSocketConfiguration = new(options =>
-                {
-                    options.KeepAliveInterval = TimeSpan.FromSeconds(10);
-                });
+		private GremlinClient Client
+		{
+			get
+			{
+				Action<ClientWebSocketOptions> webSocketConfiguration = new(options =>
+				{
+					options.KeepAliveInterval = TimeSpan.FromSeconds(10);
+				});
 
-                ConnectionPoolSettings connectionPoolSettings = new()
-                {
-                    MaxInProcessPerConnection = 10,
-                    PoolSize = 30,
-                    ReconnectionAttempts = 3,
-                    ReconnectionBaseDelay = TimeSpan.FromMilliseconds(500)
-                };
+				ConnectionPoolSettings connectionPoolSettings = new()
+				{
+					MaxInProcessPerConnection = 10,
+					PoolSize = 30,
+					ReconnectionAttempts = 3,
+					ReconnectionBaseDelay = TimeSpan.FromMilliseconds(500)
+				};
 
-                GremlinClient gremlinClient = new(Gremlin, new GraphSON2Reader(), new GraphSON2Writer(), GremlinClient.GraphSON2MimeType, connectionPoolSettings, webSocketConfiguration);
-                return gremlinClient;
-            }
-        }
+				GremlinClient gremlinClient = new(Gremlin, new GraphSON2Reader(), new GraphSON2Writer(), GremlinClient.GraphSON2MimeType, connectionPoolSettings, webSocketConfiguration);
+				return gremlinClient;
+			}
+		}
 
-        public async Task AddVertex<T>(T vertexProperties) where T : BaseVertexRecord
-        {
-            StringBuilder builder = new($"g.addV('{vertexProperties._VertexLabel}').property('id', '{vertexProperties.ID}').property('PartitionKey', '{vertexProperties._VertexPartitionKey}')");
+		public async Task AddVertex<T>(T vertex) where T : BaseVertexRecord
+		{
+			StringBuilder builder = new($"g.addV('{vertex._VertexLabel}').property('id', '{vertex.ID}').property('PartitionKey', '{vertex._VertexPartitionKey}')");
 
-            foreach (PropertyInfo propertyInfo in vertexProperties.GetType().GetProperties().Where(key => !key.Name.Equals("ID", StringComparison.OrdinalIgnoreCase)))
-                if (propertyInfo.GetValue(vertexProperties) != null)
-                    builder.Append($".property('{propertyInfo.Name}', '{propertyInfo.GetValue(vertexProperties)}')");
+			foreach (PropertyInfo propertyInfo in vertex.GetType().GetProperties().Where(key => !key.Name.Equals("ID", StringComparison.OrdinalIgnoreCase)))
+				if (propertyInfo.GetValue(vertex) != null)
+					builder.Append($".property('{propertyInfo.Name}', '{propertyInfo.GetValue(vertex)}')");
 
-            await Client.SubmitAsync<dynamic>(builder.ToString());
-        }
+			await Client.SubmitAsync<dynamic>(builder.ToString());
+		}
 
+		public async Task<VertexRecord?> GetVertex(string partitionKey, Guid id)
+		{
+			StringBuilder builder = new($"g.V(\'{id}\')");
 
-        public VertexRecord GetVertexbyID(string id)
-        {
-            StringBuilder builder = new($"g.V(\'{id}\')");
+			ResultSet<dynamic> resultSet = await Client.SubmitAsync<dynamic>(builder.ToString());
 
-            var resultSet = Client.SubmitAsync<dynamic>(builder.ToString()).Result;
+			Dictionary<string, object>? r = resultSet.ToList()[0] as Dictionary<string, object>;
 
-            var r = resultSet.ToList()[0] as Dictionary<string, object>;
+			return r != null ? VertexRecord.Parse(r) : null;
+		}
 
-            return VertexRecord.Parse(r);
-        }
+		public async Task<T?> GetVertex<T>(string partitionKey, Guid id) where T : BaseVertexRecord
+		{
+			VertexRecord? vertex = await GetVertex(partitionKey, id);
 
-        //needs to be checked
+			return vertex?.Parse<T>();
+		}
 
-        //public T GetbyID<T>(string id)
-        //{
-        //    StringBuilder builder = new($"g.V(\'{id}\')");
+		public List<VertexRecord>? FindVerticiesByAnyProperty<T>(T obj)
+		{
+			if (obj == null)
+				return null;
 
-        //    var resultSet = Client.SubmitAsync<dynamic>(builder.ToString()).Result;
+			dynamic type = obj.GetType().GetProperties();
+			StringBuilder query = new("g.V()");
 
-        //    Dictionary<string, object> r = resultSet.ToList()[0] as Dictionary<string, object>;
+			foreach (var item in type)
+			{
+				Console.WriteLine($"Property Name :{item.Name}");
+				Console.WriteLine($"Property Value :{obj.GetType().GetProperty(item.Name).GetValue(obj)}");
+				if ((obj.GetType().GetProperty(item.Name).GetValue(obj)).ToString() != "00000000-0000-0000-0000-000000000000" && obj.GetType().GetProperty(item.Name).GetValue(obj) != null)
+					query.Append($".has(\'{item.Name}\',\'{obj.GetType().GetProperty(item.Name).GetValue(obj)}')");
+			}
 
-        //    return VertexRecord.Parse<r>(r);
-        //}
+			var resultSet = Client.SubmitAsync<dynamic>(query.ToString()).Result;
+			List<VertexRecord> VR = new();
 
-        public List<VertexRecord>? FindVerticiesByAnyProperty<T>(T obj)
-        {
-            if (obj == null)
-                return null;
+			foreach (var vertex in resultSet)
+			{
+				VR.Add(VertexRecord.Parse(vertex));
+			}
 
-            dynamic type = obj.GetType().GetProperties();
-            StringBuilder query = new("g.V()");
+			var r = resultSet.ToList()[0] as Dictionary<string, object>;
 
-            foreach (var item in type)
-            {
-                Console.WriteLine($"Property Name :{item.Name}");
-                Console.WriteLine($"Property Value :{obj.GetType().GetProperty(item.Name).GetValue(obj)}");
-                if ( (obj.GetType().GetProperty(item.Name).GetValue(obj)).ToString() != "00000000-0000-0000-0000-000000000000" && obj.GetType().GetProperty(item.Name).GetValue(obj) != null)
-                    query.Append($".has(\'{item.Name}\',\'{obj.GetType().GetProperty(item.Name).GetValue(obj)}')");
-            }
+			return VR;
+		}
 
-            var resultSet = Client.SubmitAsync<dynamic>(query.ToString()).Result;
-            List<VertexRecord> VR = new();
+		public EdgeRecord GetEdgebyID(string id)
+		{
+			StringBuilder builder = new($"g.E(\'{id}\')");
+			var resultSet = Client.SubmitAsync<dynamic>(builder.ToString()).Result;
+			var r = resultSet.ToList()[0] as Dictionary<string, object>;
 
-            foreach (var vertex in resultSet)
-            {
-                VR.Add(VertexRecord.Parse(vertex));
-            }
+			return EdgeRecord.Parse(r);
+		}
 
-            var r = resultSet.ToList()[0] as Dictionary<string, object>;
+		public void AddEdge<T>(T edgeProperties, string inVID, string outVID) where T : BaseVertexRecord
+		{
+			StringBuilder builder = new($"g.V('{edgeProperties._VertexLabel}').property('id', '{edgeProperties.ID}').property('PartitionKey', '{edgeProperties._VertexPartitionKey}')");
 
-            return VR;
-        }
+			foreach (PropertyInfo propertyInfo in edgeProperties.GetType().GetProperties().Where(key => !key.Name.Equals("ID", StringComparison.OrdinalIgnoreCase)))
+				if (propertyInfo.GetValue(edgeProperties) != null)
+					builder.Append($".property('{propertyInfo.Name}', '{propertyInfo.GetValue(edgeProperties)}')");
 
+			Client.SubmitAsync<dynamic>(builder.ToString());
+		}
 
-        public EdgeRecord GetEdgebyID(string id)
-        {
-            StringBuilder builder = new($"g.E(\'{id}\')");
-            var resultSet = Client.SubmitAsync<dynamic>(builder.ToString()).Result;
-            var r = resultSet.ToList()[0] as Dictionary<string, object>;
+		public dynamic EdgeTest()
+		{
+			return Client.SubmitAsync<dynamic>("g.V(\"d3da1c85-a272-4c3a-8a8f-3c738b97ed2d\")").Result;
+		}
 
-            return EdgeRecord.Parse(r);
-        }
-
-        public void AddEdge<T>(T edgeProperties,string inVID, string outVID) where T : BaseVertexRecord
-        {
-            StringBuilder builder = new($"g.V('{edgeProperties._VertexLabel}').property('id', '{edgeProperties.ID}').property('PartitionKey', '{edgeProperties._VertexPartitionKey}')");
-
-            foreach (PropertyInfo propertyInfo in edgeProperties.GetType().GetProperties().Where(key => !key.Name.Equals("ID", StringComparison.OrdinalIgnoreCase)))
-                if (propertyInfo.GetValue(edgeProperties) != null)
-                    builder.Append($".property('{propertyInfo.Name}', '{propertyInfo.GetValue(edgeProperties)}')");
-
-             Client.SubmitAsync<dynamic>(builder.ToString());
-        }
-
-
-        public dynamic EdgeTest()
-        {
-            return Client.SubmitAsync<dynamic>("g.V(\"d3da1c85-a272-4c3a-8a8f-3c738b97ed2d\")").Result;
-        }
-
-    }
+	}
 }

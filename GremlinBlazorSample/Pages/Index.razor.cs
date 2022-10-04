@@ -59,16 +59,19 @@ namespace GremlinBlazorSample.Pages
         public class Brand : BaseVertexRecord
         {
             public string Name { get; set; }
+            public string Country { get; set; }
         }
 
         public async Task Add()
         {
             CloudGraphDbClient cloudGraph = new(ConnectionString, DatabaseId, ContainerId, Host, GremlinPK);
-            //await cloudGraph.AddVertex(new Brand()
-            //{
-            //	ID = Guid.NewGuid(),
-            //	Name = "Microsoft"
-            //});
+            
+            await cloudGraph.AddVertex(new Brand()
+            {
+                ID = Guid.NewGuid(),
+                Name = "Microsoft",
+                Country = "USA"
+            });
 
             //         VertexRecord vertex1 = cloudGraph.GetbyID("83219638-b1f6-4783-89dc-34182c55119c");
 
@@ -77,7 +80,7 @@ namespace GremlinBlazorSample.Pages
             //	Name = "Microsoft"
             //         });
 
-            EdgeRecord edge1 = cloudGraph.GetEdgebyID("95831405-b710-4c1c-981f-555c9c762145");
+            //EdgeRecord edge1 = cloudGraph.GetEdgebyID("95831405-b710-4c1c-981f-555c9c762145");
 
             Console.WriteLine();
         }

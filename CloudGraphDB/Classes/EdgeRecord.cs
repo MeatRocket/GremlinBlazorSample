@@ -7,60 +7,61 @@ using System.Threading.Tasks;
 
 namespace AngryMonkey.Cloud.GraphDB.Classes
 {
-    public record EdgeRecord : GraphRecord
-    {
-        private string inVLabel;
-        private string outVLabel;
-        private string inVID;
-        private string outVID;
+	public record EdgeRecord
+	{
+		public Guid ID { get; set; }
+		public string Label { get; set; }
+		private VertexRecord In { get; set; }
+		private VertexRecord Out { get; set; }
 
-        public EdgeRecord(Guid id, string label, string inVLabel, string outVLabel, string inVID, string outVID) : base(id, label)  
-        {
-            this.inVLabel = inVLabel;
-            this.outVLabel = outVLabel;
-            this.inVID = inVID;
-            this.outVID = outVID;
-        }
+		public EdgeRecord(Guid id, string label, string inVLabel, string outVLabel, Guid inVID, Guid outVID)
+		{
+			ID = id;
+			Label = label;
 
-        public List<GraphRecordProperty> Properties { get; set; } = new();
+			In = new VertexRecord(inVID, inVLabel);
+			Out = new VertexRecord(outVID, outVLabel);
+		}
 
-        public static EdgeRecord? Parse(dynamic result)
-        {
-            Dictionary<string, object>? resultproperties = result["properties"] as Dictionary<string, object>;
+		public List<GraphRecordProperty> Properties { get; set; } = new();
 
-            EdgeRecord edgeRecord = new(new Guid(result["id"]), result["label"], result["inVLabel"], result["outVLabel"], result["inV"], result["outV"]);
+		public static EdgeRecord? Parse(dynamic result)
+		{
+			Dictionary<string, object>? resultproperties = result["properties"] as Dictionary<string, object>;
 
-            foreach (var property in resultproperties)
-            {
-                edgeRecord.Properties.Add(new()
-                {
-                    ID = property.Key.ToString(),
-                    Value = property.Value.ToString()
-                });
-            }
+			EdgeRecord edgeRecord = new(new Guid(result["id"]), result["label"], result["inVLabel"], result["outVLabel"], result["inV"], result["outV"]);
 
-            return edgeRecord;
-        }
+			foreach (var property in resultproperties)
+			{
+				edgeRecord.Properties.Add(new()
+				{
+					ID = property.Key.ToString(),
+					Value = property.Value.ToString()
+				});
+			}
 
-        public static T Parse<T>(dynamic result) where T : BaseEdgeRecord
-        {
-            EdgeRecord edgeRecord = Parse(result);
+			return edgeRecord;
+		}
 
-            T? obj = Activator.CreateInstance(typeof(T)) as T;
+		public static T Parse<T>(dynamic result) where T : BaseVertexRecord
+		{
+			EdgeRecord edgeRecord = Parse(result);
 
-            obj.ID = edgeRecord.ID;
+			T? obj = Activator.CreateInstance(typeof(T)) as T;
 
-            foreach (GraphRecordProperty graphProperty in edgeRecord.Properties)
-            {
-                PropertyInfo? propertyInfo = typeof(T).GetProperty(graphProperty.ID);
+			obj.ID = edgeRecord.ID;
 
-                if (propertyInfo == null)
-                    continue;
+			foreach (GraphRecordProperty graphProperty in edgeRecord.Properties)
+			{
+				PropertyInfo? propertyInfo = typeof(T).GetProperty(graphProperty.ID);
 
-                propertyInfo.SetValue(obj, graphProperty.Value);
-            }
+				if (propertyInfo == null)
+					continue;
 
-            return obj;
-        }
-    }
+				propertyInfo.SetValue(obj, graphProperty.Value);
+			}
+
+			return obj;
+		}
+	}
 }
