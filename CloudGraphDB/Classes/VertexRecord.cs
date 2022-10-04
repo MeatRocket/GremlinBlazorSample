@@ -1,27 +1,23 @@
-﻿using System.Net.WebSockets;
+﻿using AngryMonkey.Cloud.GraphDB.Classes;
+using System.Net.WebSockets;
 using System.Reflection;
 
 namespace AngryMonkey.Cloud.GraphDB
 {
-	public partial record VertexRecord
+	public partial record VertexRecord : GraphRecord
 	{
-		public VertexRecord(Guid id, string label)
-		{
-			ID = id;
-			Label = label;
-		}
+		public VertexRecord(Guid id, string label) : base(id, label)
+		{}
 
-		public Guid ID { get; set; }
-		public string Label { get; set; }
 		internal string PartitionKeyValue => Label;
 
-		public List<VertexRecordProperty> Properties { get; set; } = new();
+		public List<GraphRecordProperty> Properties { get; set; } = new();
 
 		public static VertexRecord? Parse(dynamic result)
 		{
 			Dictionary<string, object>? resultproperties = result["properties"] as Dictionary<string, object>;
 
-			VertexRecord graphRecord = new(new Guid(result["id"]), result["label"]);
+            VertexRecord graphRecord = new(new Guid(result["id"]), result["label"]);
 
 			foreach (var property in resultproperties)
 			{
@@ -39,15 +35,15 @@ namespace AngryMonkey.Cloud.GraphDB
 			return graphRecord;
 		}
 
-		public static T Parse<T>(dynamic result) where T : BaseVertexRecord
+		public static T Parse<T>(dynamic result) where T : BaseGraphRecord
 		{
-			VertexRecord vertexRecord = Parse(result);
+			VertexRecord vertexRecord = NewMethod(result);
 
-			T obj = (T)Activator.CreateInstance(typeof(T));
+			T? obj = Activator.CreateInstance(typeof(T)) as T;
 
 			obj.ID = vertexRecord.ID;
 
-			foreach (VertexRecordProperty graphProperty in vertexRecord.Properties)
+			foreach (GraphRecordProperty graphProperty in vertexRecord.Properties)
 			{
 				PropertyInfo? propertyInfo = typeof(T).GetProperty(graphProperty.ID);
 
@@ -58,6 +54,11 @@ namespace AngryMonkey.Cloud.GraphDB
 			}
 
 			return obj;
+		}
+
+		private static VertexRecord NewMethod(dynamic result)
+		{
+			return Parse(result);
 		}
 	}
 }
