@@ -35,7 +35,7 @@ namespace AngryMonkey.Cloud.GraphDB
 			return graphRecord;
 		}
 
-		public static T Parse<T>(dynamic result) where T : BaseGraphRecord
+		public static T Parse<T>(dynamic result) where T : BaseVertexRecord
 		{
 			VertexRecord vertexRecord = NewMethod(result);
 

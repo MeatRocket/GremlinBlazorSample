@@ -62,13 +62,13 @@ namespace AngryMonkey.Cloud.GraphDB
             }
         }
 
-        public async Task AddVertex<T>(T vertex) where T : BaseGraphRecord
+        public async Task AddVertex<T>(T vertexProperties) where T : BaseVertexRecord
         {
-            StringBuilder builder = new($"g.addV('{vertex._VertexLabel}').property('id', '{vertex.ID}').property('PartitionKey', '{vertex._VertexPartitionKey}')");
+            StringBuilder builder = new($"g.addV('{vertexProperties._VertexLabel}').property('id', '{vertexProperties.ID}').property('PartitionKey', '{vertexProperties._VertexPartitionKey}')");
 
-            foreach (PropertyInfo propertyInfo in vertex.GetType().GetProperties().Where(key => !key.Name.Equals("ID", StringComparison.OrdinalIgnoreCase)))
-                if (propertyInfo.GetValue(vertex) != null)
-                    builder.Append($".property('{propertyInfo.Name}', '{propertyInfo.GetValue(vertex)}')");
+            foreach (PropertyInfo propertyInfo in vertexProperties.GetType().GetProperties().Where(key => !key.Name.Equals("ID", StringComparison.OrdinalIgnoreCase)))
+                if (propertyInfo.GetValue(vertexProperties) != null)
+                    builder.Append($".property('{propertyInfo.Name}', '{propertyInfo.GetValue(vertexProperties)}')");
 
             await Client.SubmitAsync<dynamic>(builder.ToString());
         }
@@ -137,13 +137,13 @@ namespace AngryMonkey.Cloud.GraphDB
             return EdgeRecord.Parse(r);
         }
 
-        public void AddEdge<T>(T vertex,string inVID, string outVID) where T : BaseGraphRecord
+        public void AddEdge<T>(T edgeProperties,string inVID, string outVID) where T : BaseVertexRecord
         {
-            StringBuilder builder = new($"g.addV('{vertex._VertexLabel}').property('id', '{vertex.ID}').property('PartitionKey', '{vertex._VertexPartitionKey}')");
+            StringBuilder builder = new($"g.V('{edgeProperties._VertexLabel}').property('id', '{edgeProperties.ID}').property('PartitionKey', '{edgeProperties._VertexPartitionKey}')");
 
-            foreach (PropertyInfo propertyInfo in vertex.GetType().GetProperties().Where(key => !key.Name.Equals("ID", StringComparison.OrdinalIgnoreCase)))
-                if (propertyInfo.GetValue(vertex) != null)
-                    builder.Append($".property('{propertyInfo.Name}', '{propertyInfo.GetValue(vertex)}')");
+            foreach (PropertyInfo propertyInfo in edgeProperties.GetType().GetProperties().Where(key => !key.Name.Equals("ID", StringComparison.OrdinalIgnoreCase)))
+                if (propertyInfo.GetValue(edgeProperties) != null)
+                    builder.Append($".property('{propertyInfo.Name}', '{propertyInfo.GetValue(edgeProperties)}')");
 
              Client.SubmitAsync<dynamic>(builder.ToString());
         }

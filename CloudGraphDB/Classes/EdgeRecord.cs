@@ -42,7 +42,7 @@ namespace AngryMonkey.Cloud.GraphDB.Classes
             return edgeRecord;
         }
 
-        public static T Parse<T>(dynamic result) where T : BaseGraphRecord
+        public static T Parse<T>(dynamic result) where T : BaseEdgeRecord
         {
             EdgeRecord edgeRecord = Parse(result);
 

@@ -56,7 +56,7 @@ namespace GremlinBlazorSample.Pages
             ReconnectionBaseDelay = TimeSpan.FromMilliseconds(500)
         };
 
-        public class Brand : BaseGraphRecord
+        public class Brand : BaseVertexRecord
         {
             public string Name { get; set; }
         }
