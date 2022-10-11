@@ -65,14 +65,26 @@ namespace GremlinBlazorSample.Pages
         public async Task Add()
         {
             CloudGraphDbClient cloudGraph = new(ConnectionString, DatabaseId, ContainerId, Host, GremlinPK);
-            
-            //await cloudGraph.AddVertex(new Brand()
-            //{
-            //    ID = Guid.NewGuid(),
-            //    Name = "Microsoft",
-            //    Country = "USA"
-            //});
 
+            //cloudGraph.EdgeTest();
+            Guid g = Guid.NewGuid();
+
+            await cloudGraph.AddVertex(new Brand()
+            {
+                ID = g,
+                Name = "XBOXx",
+                Country = "Test"
+            });
+
+            Console.WriteLine();
+
+            List<GraphRecordProperty> gp = new()
+            {
+                new(){ID = "HAHA", Value="Hehe"},
+                new(){ID = "Country", Value="Hawai"}
+            };
+
+            cloudGraph.UpdateVertexProperty(g,"Brand", gp);
             //         VertexRecord vertex1 = cloudGraph.GetbyID("83219638-b1f6-4783-89dc-34182c55119c");
 
             //List <VertexRecord> vertexRecords = cloudGraph.FindVerticiesByAnyProperty(new Brand()
@@ -82,7 +94,6 @@ namespace GremlinBlazorSample.Pages
 
             //EdgeRecord edge1 = cloudGraph.GetEdgebyID("95831405-b710-4c1c-981f-555c9c762145");
 
-            Console.WriteLine();
         }
 
         //private static string PrintStatusAttributes(IReadOnlyDictionary<string, object> attributes)

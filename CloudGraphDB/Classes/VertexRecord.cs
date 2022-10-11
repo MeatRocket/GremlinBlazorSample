@@ -21,7 +21,7 @@ namespace AngryMonkey.Cloud.GraphDB
 
 		public static VertexRecord? Parse(dynamic result)
 		{
-			Dictionary<string, object>? resultproperties = result["properties"] as Dictionary<string, object>;
+			Dictionary<string, object>? resultproperties = result["properties"] ;
 
 			VertexRecord graphRecord = new(new Guid(result["id"]), result["label"]);
 

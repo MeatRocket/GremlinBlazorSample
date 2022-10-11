@@ -2,6 +2,8 @@
 using Gremlin.Net.Driver;
 using Gremlin.Net.Structure.IO.GraphSON;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow;
+using Newtonsoft.Json.Linq;
 using System.Drawing.Drawing2D;
 using System.Net.WebSockets;
 using System.Reflection;
@@ -74,7 +76,33 @@ namespace AngryMonkey.Cloud.GraphDB
 			await Client.SubmitAsync<dynamic>(builder.ToString());
 		}
 
-		public async Task<VertexRecord?> GetVertex(string partitionKey, Guid id)
+        public async Task DeleteVertex(Guid id, string pk)
+        {
+            StringBuilder builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{pk}\").drop()");
+
+            await Client.SubmitAsync<dynamic>(builder.ToString());
+        }
+
+        public async Task UpdateVertexProperty(Guid id, string pk, string key ,string value)
+        {
+            StringBuilder builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{pk}\").property(\"{key}\",\"{value}\")");
+
+            await Client.SubmitAsync<dynamic>(builder.ToString());
+        }
+
+		public async Task UpdateVertexProperty(Guid id, string pk, List<GraphRecordProperty> properties)
+		{
+            StringBuilder builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{pk}\")");
+
+			foreach (GraphRecordProperty property in properties)
+			{
+				builder.Append($".property(\"{property.ID}\",\"{property.Value}\")");
+            }
+
+            await Client.SubmitAsync<dynamic>(builder.ToString());
+        }
+
+        public async Task<VertexRecord?> GetVertex(string partitionKey, Guid id)
 		{
 			StringBuilder builder = new($"g.V(\'{id}\')");
 
@@ -141,10 +169,21 @@ namespace AngryMonkey.Cloud.GraphDB
 			Client.SubmitAsync<dynamic>(builder.ToString());
 		}
 
-		public dynamic EdgeTest()
+        public class Brand : BaseVertexRecord
+        {
+            public string Name { get; set; }
+            public string Country { get; set; }
+        }
+
+        public async void EdgeTest()
 		{
-			return Client.SubmitAsync<dynamic>("g.V(\"d3da1c85-a272-4c3a-8a8f-3c738b97ed2d\")").Result;
-		}
+            dynamic r = await Client.SubmitAsync<dynamic>("g.V(\"9b0a078a-415b-4ff5-8024-b5a7aa4c0e4c\")");
+            //dynamic r = await Client.SubmitAsync<dynamic>("g.V(\"9b0a078a-415b-4ff5-8024-b5a7aa4c0e4c\")");
+            //foreach (var item in r)
+            //{
+            //             Brand b = VertexRecord.Parse<Brand>(item);
+            //         }
+        }
 
 	}
 }
