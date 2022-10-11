@@ -27,34 +27,34 @@ namespace GremlinBlazorSample.Pages
         protected Container Container { get; set; }
         string containerLink = "/dbs/" + DatabaseId + "/colls/" + ContainerId;
 
-        public string GenerateID(string label)
-        {
-            Guid Id = new();
-            return label + Id;
-        }
-        bool Started { get; set; } = false;
+        //public string GenerateID(string label)
+        //{
+        //    Guid Id = new();
+        //    return label + Id;
+        //}
+        //bool Started { get; set; } = false;
 
-        private static bool EnableSSL
-        {
-            get
-            {
-                if (Environment.GetEnvironmentVariable("EnableSSL") == null)
-                    return true;
+        //private static bool EnableSSL
+        //{
+        //    get
+        //    {
+        //        if (Environment.GetEnvironmentVariable("EnableSSL") == null)
+        //            return true;
 
-                if (!bool.TryParse(Environment.GetEnvironmentVariable("EnableSSL"), out bool value))
-                    throw new ArgumentException("Invalid env var: EnableSSL is not a boolean");
+        //        if (!bool.TryParse(Environment.GetEnvironmentVariable("EnableSSL"), out bool value))
+        //            throw new ArgumentException("Invalid env var: EnableSSL is not a boolean");
 
-                return value;
-            }
-        }
+        //        return value;
+        //    }
+        //}
 
-        ConnectionPoolSettings connectionPoolSettings = new()
-        {
-            MaxInProcessPerConnection = 10,
-            PoolSize = 30,
-            ReconnectionAttempts = 3,
-            ReconnectionBaseDelay = TimeSpan.FromMilliseconds(500)
-        };
+        //ConnectionPoolSettings connectionPoolSettings = new()
+        //{
+        //    MaxInProcessPerConnection = 10,
+        //    PoolSize = 30,
+        //    ReconnectionAttempts = 3,
+        //    ReconnectionBaseDelay = TimeSpan.FromMilliseconds(500)
+        //};
 
         public class Brand : BaseVertexRecord
         {
@@ -66,12 +66,12 @@ namespace GremlinBlazorSample.Pages
         {
             CloudGraphDbClient cloudGraph = new(ConnectionString, DatabaseId, ContainerId, Host, GremlinPK);
             
-            await cloudGraph.AddVertex(new Brand()
-            {
-                ID = Guid.NewGuid(),
-                Name = "Microsoft",
-                Country = "USA"
-            });
+            //await cloudGraph.AddVertex(new Brand()
+            //{
+            //    ID = Guid.NewGuid(),
+            //    Name = "Microsoft",
+            //    Country = "USA"
+            //});
 
             //         VertexRecord vertex1 = cloudGraph.GetbyID("83219638-b1f6-4783-89dc-34182c55119c");
 
@@ -85,34 +85,29 @@ namespace GremlinBlazorSample.Pages
             Console.WriteLine();
         }
 
-        private static string PrintStatusAttributes(IReadOnlyDictionary<string, object> attributes)
-        {
-            return
-            $"\tStatusAttributes:" +
-            $"\t[\" Status Code :  {GetValueAsString(attributes, "x-ms-status-code")}\"]" +
-            $"\t[\" Total Time: {GetValueAsString(attributes, "x-ms-total-server-time-ms")}\"]" +
-            $"\t[\" RU Cost : {GetValueAsString(attributes, "x-ms-total-request-charge")}\"] ";
-        }
+        //private static string PrintStatusAttributes(IReadOnlyDictionary<string, object> attributes)
+        //{
+        //    return
+        //    $"\tStatusAttributes:" +
+        //    $"\t[\" Status Code :  {GetValueAsString(attributes, "x-ms-status-code")}\"]" +
+        //    $"\t[\" Total Time: {GetValueAsString(attributes, "x-ms-total-server-time-ms")}\"]" +
+        //    $"\t[\" RU Cost : {GetValueAsString(attributes, "x-ms-total-request-charge")}\"] ";
+        //}
 
-        public static string GetValueAsString(IReadOnlyDictionary<string, object> dictionary, string key)
-        {
-            return JsonConvert.SerializeObject(GetValueOrDefault(dictionary, key));
-        }
+        //public static string GetValueAsString(IReadOnlyDictionary<string, object> dictionary, string key)
+        //{
+        //    return JsonConvert.SerializeObject(GetValueOrDefault(dictionary, key));
+        //}
 
-        public static object GetValueOrDefault(IReadOnlyDictionary<string, object> dictionary, string key)
-        {
-            if (dictionary.ContainsKey(key))
-            {
-                return dictionary[key];
-            }
+        //public static object GetValueOrDefault(IReadOnlyDictionary<string, object> dictionary, string key)
+        //{
+        //    if (dictionary.ContainsKey(key))
+        //    {
+        //        return dictionary[key];
+        //    }
 
-            return null;
-        }
-
-
-        public string DisplayResultSet { get; set; } = "";
-
-        public string DisplayResult { get; set; } = "";
+        //    return null;
+        //}
 
     }
 }

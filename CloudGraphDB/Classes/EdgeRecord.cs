@@ -64,9 +64,7 @@ namespace AngryMonkey.Cloud.GraphDB.Classes
         public static T Parse<T>(dynamic result) where T : BaseVertexRecord
 		{
 			EdgeRecord edgeRecord = Parse(result);
-
 			return edgeRecord.Parse<T>();
-
         }
 	}
 }
