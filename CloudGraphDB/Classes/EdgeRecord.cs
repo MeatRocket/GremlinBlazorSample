@@ -43,25 +43,30 @@ namespace AngryMonkey.Cloud.GraphDB.Classes
 			return edgeRecord;
 		}
 
-		public static T Parse<T>(dynamic result) where T : BaseVertexRecord
+        public T Parse<T>() where T : BaseVertexRecord
+        {
+            T? obj = Activator.CreateInstance(typeof(T)) as T;
+
+            obj.ID = ID;
+
+            foreach (GraphRecordProperty graphProperty in Properties)
+            {
+                PropertyInfo? propertyInfo = typeof(T).GetProperty(graphProperty.ID);
+
+                if (propertyInfo != null)
+                    propertyInfo.SetValue(obj, graphProperty.Value);
+
+            }
+
+            return obj;
+        }
+
+        public static T Parse<T>(dynamic result) where T : BaseVertexRecord
 		{
 			EdgeRecord edgeRecord = Parse(result);
 
-			T? obj = Activator.CreateInstance(typeof(T)) as T;
+			return edgeRecord.Parse<T>();
 
-			obj.ID = edgeRecord.ID;
-
-			foreach (GraphRecordProperty graphProperty in edgeRecord.Properties)
-			{
-				PropertyInfo? propertyInfo = typeof(T).GetProperty(graphProperty.ID);
-
-				if (propertyInfo == null)
-					continue;
-
-				propertyInfo.SetValue(obj, graphProperty.Value);
-			}
-
-			return obj;
-		}
+        }
 	}
 }

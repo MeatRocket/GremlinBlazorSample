@@ -51,11 +51,10 @@ namespace AngryMonkey.Cloud.GraphDB
 			{
 				PropertyInfo? propertyInfo = typeof(T).GetProperty(graphProperty.ID);
 
-				if (propertyInfo == null)
-					continue;
-
-				propertyInfo.SetValue(obj, graphProperty.Value);
-			}
+				if (propertyInfo != null)
+                    propertyInfo.SetValue(obj, graphProperty.Value);
+                
+            }
 
 			return obj;
 		}
