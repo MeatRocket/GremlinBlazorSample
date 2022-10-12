@@ -193,6 +193,43 @@ namespace AngryMonkey.Cloud.GraphDB
             await Client.SubmitAsync<dynamic>(builder.ToString());
         }
 
+        public async Task UpdateEdgeProperty<T>(Guid id, T obj)
+        {
+            StringBuilder builder = new($"g.E(\"{id}\")");
+
+            dynamic properties = obj.GetType().GetProperties();
+
+            foreach (var property in properties)
+            {
+                Console.WriteLine($"Property Name :{property.Name}");
+                Console.WriteLine($"Property Value :{obj.GetType().GetProperty(property.Name).GetValue(obj)}");
+                if ((obj.GetType().GetProperty(property.Name).GetValue(obj)).ToString() != "00000000-0000-0000-0000-000000000000" && obj.GetType().GetProperty(property.Name).GetValue(obj) != null)
+                    builder.Append($".property(\'{property.Name}\',\'{obj.GetType().GetProperty(property.Name).GetValue(obj)}')");
+            }
+
+            await Client.SubmitAsync<dynamic>(builder.ToString());
+        }
+
+
+        public async Task UpdateEdgeProperty(Guid id, string key, string value)
+        {
+            StringBuilder builder = new($"g.E(\"{id}\").property(\"{key}\",\"{value}\")");
+
+            await Client.SubmitAsync<dynamic>(builder.ToString());
+        }
+
+        public async Task UpdateEdgeProperty(Guid id, string pk, List<GraphRecordProperty> properties)
+        {
+            StringBuilder builder = new($"g.E(\"{id}\")");
+
+            foreach (GraphRecordProperty property in properties)
+            {
+                builder.Append($".property(\"{property.ID}\",\"{property.Value}\")");
+            }
+
+            await Client.SubmitAsync<dynamic>(builder.ToString());
+        }
+
         public class Brand : BaseVertexRecord
         {
             public string Name { get; set; }
