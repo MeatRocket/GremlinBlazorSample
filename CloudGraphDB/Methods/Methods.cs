@@ -90,7 +90,7 @@ namespace AngryMonkey.Cloud.GraphDB
             await Client.SubmitAsync<dynamic>(builder.ToString());
         }
 
-		public async Task UpdateVertexProperty(Guid id, string pk, List<GraphRecordProperty> properties)
+		public async Task UpdateVertexProperties(Guid id, string pk, List<GraphRecordProperty> properties)
 		{
             StringBuilder builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{pk}\")");
 
@@ -102,7 +102,7 @@ namespace AngryMonkey.Cloud.GraphDB
             await Client.SubmitAsync<dynamic>(builder.ToString());
         }
 
-        public async Task UpdateVertexProperty<T>(Guid id, string pk, T obj)
+        public async Task UpdateVertexProperties<T>(Guid id, string pk, T obj)
         {
             StringBuilder builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{pk}\")");
 
@@ -193,7 +193,14 @@ namespace AngryMonkey.Cloud.GraphDB
             await Client.SubmitAsync<dynamic>(builder.ToString());
         }
 
-        public async Task UpdateEdgeProperty<T>(Guid id, T obj)
+        public async Task UpdateEdgeProperty(Guid id, string key, string value)
+        {
+            StringBuilder builder = new($"g.E(\"{id}\").property(\"{key}\",\"{value}\")");
+
+            await Client.SubmitAsync<dynamic>(builder.ToString());
+        }
+
+        public async Task UpdateEdgeProperties<T>(Guid id, T obj)
         {
             StringBuilder builder = new($"g.E(\"{id}\")");
 
@@ -211,14 +218,7 @@ namespace AngryMonkey.Cloud.GraphDB
         }
 
 
-        public async Task UpdateEdgeProperty(Guid id, string key, string value)
-        {
-            StringBuilder builder = new($"g.E(\"{id}\").property(\"{key}\",\"{value}\")");
-
-            await Client.SubmitAsync<dynamic>(builder.ToString());
-        }
-
-        public async Task UpdateEdgeProperty(Guid id, string pk, List<GraphRecordProperty> properties)
+        public async Task UpdateEdgeProperties(Guid id, string pk, List<GraphRecordProperty> properties)
         {
             StringBuilder builder = new($"g.E(\"{id}\")");
 
