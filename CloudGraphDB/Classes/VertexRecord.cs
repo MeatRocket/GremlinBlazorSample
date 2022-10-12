@@ -4,10 +4,16 @@ using System.Reflection;
 
 namespace AngryMonkey.Cloud.GraphDB
 {
-	public partial record VertexRecord : GraphRecord
+	public partial record VertexRecord
 	{
-		public VertexRecord(Guid id, string label) : base(id, label)
-		{}
+		public Guid ID { get; set; }
+		public string Label { get; set; }
+
+		public VertexRecord(Guid id, string label)
+		{
+			ID = id;
+			Label = label;
+		}
 
 		internal string PartitionKeyValue => Label;
 
@@ -15,9 +21,9 @@ namespace AngryMonkey.Cloud.GraphDB
 
 		public static VertexRecord? Parse(dynamic result)
 		{
-			Dictionary<string, object>? resultproperties = result["properties"] as Dictionary<string, object>;
+			Dictionary<string, object>? resultproperties = result["properties"] ;
 
-            VertexRecord graphRecord = new(new Guid(result["id"]), result["label"]);
+			VertexRecord graphRecord = new(new Guid(result["id"]), result["label"]);
 
 			foreach (var property in resultproperties)
 			{
@@ -35,30 +41,28 @@ namespace AngryMonkey.Cloud.GraphDB
 			return graphRecord;
 		}
 
-		public static T Parse<T>(dynamic result) where T : BaseGraphRecord
+		public T Parse<T>() where T : BaseVertexRecord
 		{
-			VertexRecord vertexRecord = NewMethod(result);
-
 			T? obj = Activator.CreateInstance(typeof(T)) as T;
 
-			obj.ID = vertexRecord.ID;
+			obj.ID = ID;
 
-			foreach (GraphRecordProperty graphProperty in vertexRecord.Properties)
+			foreach (GraphRecordProperty graphProperty in Properties)
 			{
 				PropertyInfo? propertyInfo = typeof(T).GetProperty(graphProperty.ID);
 
-				if (propertyInfo == null)
-					continue;
-
-				propertyInfo.SetValue(obj, graphProperty.Value);
-			}
+				if (propertyInfo != null)
+                    propertyInfo.SetValue(obj, graphProperty.Value);
+                
+            }
 
 			return obj;
 		}
 
-		private static VertexRecord NewMethod(dynamic result)
+		public static T Parse<T>(dynamic result) where T : BaseVertexRecord
 		{
-			return Parse(result);
+			VertexRecord vertexRecord = Parse(result);
+			return vertexRecord.Parse<T>();
 		}
 	}
 }

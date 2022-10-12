@@ -6,13 +6,9 @@
 
 //namespace AngryMonkey.Cloud.GraphDB.Classes
 //{
-//    public record GraphRecord
+//    public class BaseEdgeRecord
 //    {
-//        public GraphRecord(Guid id, string label)
-//        {
-//            ID = id;
-//            Label = label;
-//        }
-
+//        public Guid ID { get; set; }
+//        internal string _VertexLabel => this.GetType().Name;
 //    }
 //}
