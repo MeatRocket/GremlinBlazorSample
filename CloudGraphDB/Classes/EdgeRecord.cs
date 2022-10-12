@@ -11,8 +11,8 @@ namespace AngryMonkey.Cloud.GraphDB.Classes
 	{
 		public Guid ID { get; set; }
 		public string Label { get; set; }
-		private VertexRecord In { get; set; }
-		private VertexRecord Out { get; set; }
+		public VertexRecord In { get; set; }
+		public VertexRecord Out { get; set; }
 
 		public EdgeRecord(Guid id, string label, string inVLabel, string outVLabel, Guid inVID, Guid outVID)
 		{
@@ -29,7 +29,7 @@ namespace AngryMonkey.Cloud.GraphDB.Classes
 		{
 			Dictionary<string, object>? resultproperties = result["properties"] as Dictionary<string, object>;
 
-			EdgeRecord edgeRecord = new(new Guid(result["id"]), result["label"], result["inVLabel"], result["outVLabel"], result["inV"], result["outV"]);
+			EdgeRecord edgeRecord = new(new Guid(result["id"]), result["label"], result["inVLabel"], result["outVLabel"], new Guid(result["inV"]), new Guid(result["outV"]));
 
 			foreach (var property in resultproperties)
 			{

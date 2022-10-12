@@ -67,25 +67,33 @@ namespace GremlinBlazorSample.Pages
             CloudGraphDbClient cloudGraph = new(ConnectionString, DatabaseId, ContainerId, Host, GremlinPK);
 
             //cloudGraph.EdgeTest();
-            Guid g = Guid.NewGuid();
+            Guid g =new Guid("d3da1c85-a272-4c3a-8a8f-3c738b97ed2d");
 
-            await cloudGraph.AddVertex(new Brand()
-            {
-                ID = g,
-                Name = "XBOXx",
-                Country = "Test"
-            });
+            //VertexRecord v = await cloudGraph.GetVertex("Brand", g);
 
-            Console.WriteLine();
+            //EdgeRecord e = cloudGraph.GetEdgebyID("95831405-b710-4c1c-981f-555c9c762145");
 
-            List<GraphRecordProperty> gp = new()
-            {
-                new(){ID = "HAHA", Value="Hehe"},
-                new(){ID = "Country", Value="Hawai"}
-            };
+            //await cloudGraph.AddVertex(new Brand()
+            //{
+            //    ID = g,
+            //    Name = "XBOXx",
+            //    Country = "Test"
+            //});
 
-            cloudGraph.UpdateVertexProperty(g,"Brand", gp);
-            //         VertexRecord vertex1 = cloudGraph.GetbyID("83219638-b1f6-4783-89dc-34182c55119c");
+            //Console.WriteLine();
+
+            ////List<GraphRecordProperty> gp = new()
+            ////{
+            ////    new(){ID = "HAHA", Value="Hehe"},
+            ////    new(){ID = "Country", Value="Hawai"}
+            ////};
+            //Brand b = new()
+            //{
+            //    Name = "Apple",
+            //    Country = "Canada"
+            //};
+            //cloudGraph.UpdateVertexProperty<Brand>(g,"Brand", b);
+            //VertexRecord vertex1 = await cloudGraph.GetVertex("Brand",g);
 
             //List <VertexRecord> vertexRecords = cloudGraph.FindVerticiesByAnyProperty(new Brand()
             //{
@@ -93,6 +101,7 @@ namespace GremlinBlazorSample.Pages
             //         });
 
             //EdgeRecord edge1 = cloudGraph.GetEdgebyID("95831405-b710-4c1c-981f-555c9c762145");
+
 
         }
 

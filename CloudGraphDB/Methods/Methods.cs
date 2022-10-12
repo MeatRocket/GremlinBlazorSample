@@ -102,6 +102,23 @@ namespace AngryMonkey.Cloud.GraphDB
             await Client.SubmitAsync<dynamic>(builder.ToString());
         }
 
+        public async Task UpdateVertexProperty<T>(Guid id, string pk, T obj)
+        {
+            StringBuilder builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{pk}\")");
+
+            dynamic properties = obj.GetType().GetProperties();
+
+            foreach (var property in properties)
+            {
+                Console.WriteLine($"Property Name :{property.Name}");
+                Console.WriteLine($"Property Value :{obj.GetType().GetProperty(property.Name).GetValue(obj)}");
+                if ((obj.GetType().GetProperty(property.Name).GetValue(obj)).ToString() != "00000000-0000-0000-0000-000000000000" && obj.GetType().GetProperty(property.Name).GetValue(obj) != null)
+                    builder.Append($".property(\'{property.Name}\',\'{obj.GetType().GetProperty(property.Name).GetValue(obj)}')");
+            }
+
+            await Client.SubmitAsync<dynamic>(builder.ToString());
+        }
+
         public async Task<VertexRecord?> GetVertex(string partitionKey, Guid id)
 		{
 			StringBuilder builder = new($"g.V(\'{id}\')");
@@ -120,7 +137,7 @@ namespace AngryMonkey.Cloud.GraphDB
 			return vertex?.Parse<T>();
 		}
 
-		public List<VertexRecord>? FindVerticiesByAnyProperty<T>(T obj)
+		public async Task<List<VertexRecord>?> FindVerticiesByAnyProperty<T>(T obj)
 		{
 			if (obj == null)
 				return null;
@@ -136,7 +153,7 @@ namespace AngryMonkey.Cloud.GraphDB
 					query.Append($".has(\'{item.Name}\',\'{obj.GetType().GetProperty(item.Name).GetValue(obj)}')");
 			}
 
-			var resultSet = Client.SubmitAsync<dynamic>(query.ToString()).Result;
+			var resultSet =await Client.SubmitAsync<dynamic>(query.ToString());
 			List<VertexRecord> VR = new();
 
 			foreach (var vertex in resultSet)
@@ -149,25 +166,32 @@ namespace AngryMonkey.Cloud.GraphDB
 			return VR;
 		}
 
-		public EdgeRecord GetEdgebyID(string id)
+		public async Task<EdgeRecord> GetEdgebyID(string id)
 		{
 			StringBuilder builder = new($"g.E(\'{id}\')");
-			var resultSet = Client.SubmitAsync<dynamic>(builder.ToString()).Result;
+			var resultSet =await Client.SubmitAsync<dynamic>(builder.ToString());
 			var r = resultSet.ToList()[0] as Dictionary<string, object>;
 
 			return EdgeRecord.Parse(r);
 		}
 
-		public void AddEdge<T>(T edgeProperties, string inVID, string outVID) where T : BaseVertexRecord
+        public void AddEdge<T>(T edgeProperties, Guid inVID, Guid outVID) where T : BaseVertexRecord
 		{
-			StringBuilder builder = new($"g.V('{edgeProperties._VertexLabel}').property('id', '{edgeProperties.ID}').property('PartitionKey', '{edgeProperties._VertexPartitionKey}')");
+			StringBuilder builder = new($"g.V(\"{outVID}\").as('a').V(\"{inVID}\").as('b').addE(\"{edgeProperties._VertexLabel}\").from('a').to('b')");
 
-			foreach (PropertyInfo propertyInfo in edgeProperties.GetType().GetProperties().Where(key => !key.Name.Equals("ID", StringComparison.OrdinalIgnoreCase)))
+            foreach (PropertyInfo propertyInfo in edgeProperties.GetType().GetProperties().Where(key => !key.Name.Equals("ID", StringComparison.OrdinalIgnoreCase)))
 				if (propertyInfo.GetValue(edgeProperties) != null)
 					builder.Append($".property('{propertyInfo.Name}', '{propertyInfo.GetValue(edgeProperties)}')");
 
 			Client.SubmitAsync<dynamic>(builder.ToString());
 		}
+
+        public async Task DeleteEdge(Guid id, string pk)
+        {
+            StringBuilder builder = new($"g.E(\"{id}\").drop()");
+
+            await Client.SubmitAsync<dynamic>(builder.ToString());
+        }
 
         public class Brand : BaseVertexRecord
         {
