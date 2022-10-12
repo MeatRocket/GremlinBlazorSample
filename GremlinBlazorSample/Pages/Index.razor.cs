@@ -58,8 +58,8 @@ namespace GremlinBlazorSample.Pages
 
         public class Brand : BaseVertexRecord
         {
-            public string Name { get; set; }
-            public string Country { get; set; }
+            public string year { get; set; }
+            public string Salary { get; set; }
         }
 
         public async Task Add()
@@ -74,7 +74,9 @@ namespace GremlinBlazorSample.Pages
                 new(){ID = "Salary", Value = "6000"},
                 new(){ID = "HAHA", Value = "HEHE"}
             };
-            await cloudGraph.UpdateEdgeProperties(g, properties);
+
+            Brand b = new() { year = "123", Salary = "222" };
+            await cloudGraph.UpdateEdgeProperties<Brand>(g, b);
             //VertexRecord v = await cloudGraph.GetVertex("Brand", g);
 
             //EdgeRecord e = cloudGraph.GetEdgebyID("95831405-b710-4c1c-981f-555c9c762145");

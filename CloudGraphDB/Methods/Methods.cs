@@ -3,6 +3,7 @@ using Gremlin.Net.Driver;
 using Gremlin.Net.Structure.IO.GraphSON;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Serialization.HybridRow;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow.Schemas;
 using Newtonsoft.Json.Linq;
 using System.Drawing.Drawing2D;
 using System.Net.WebSockets;
@@ -76,23 +77,23 @@ namespace AngryMonkey.Cloud.GraphDB
 			await Client.SubmitAsync<dynamic>(builder.ToString());
 		}
 
-        public async Task DeleteVertex(Guid id, string pk)
+        public async Task DeleteVertex(string partitionkey, Guid id)
         {
-            StringBuilder builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{pk}\").drop()");
+            StringBuilder builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{partitionkey}\").drop()");
 
             await Client.SubmitAsync<dynamic>(builder.ToString());
         }
 
-        public async Task UpdateVertexProperty(Guid id, string pk, string key ,string value)
+        public async Task UpdateVertexProperty(string partitionkey, Guid id, string key ,string value)
         {
-            StringBuilder builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{pk}\").property(\"{key}\",\"{value}\")");
+            StringBuilder builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{partitionkey}\").property(\"{key}\",\"{value}\")");
 
             await Client.SubmitAsync<dynamic>(builder.ToString());
         }
 
-		public async Task UpdateVertexProperties(Guid id, string pk, List<GraphRecordProperty> properties)
+		public async Task UpdateVertexProperties(string partitionkey, Guid id, List<GraphRecordProperty> properties)
 		{
-            StringBuilder builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{pk}\")");
+            StringBuilder builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{partitionkey}\")");
 
 			foreach (GraphRecordProperty property in properties)
 			{
@@ -102,9 +103,9 @@ namespace AngryMonkey.Cloud.GraphDB
             await Client.SubmitAsync<dynamic>(builder.ToString());
         }
 
-        public async Task UpdateVertexProperties<T>(Guid id, string pk, T obj)
+        public async Task UpdateVertexProperties<T>(string partitionkey, Guid id, T obj)
         {
-            StringBuilder builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{pk}\")");
+            StringBuilder builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{partitionkey}\")");
 
             dynamic properties = obj.GetType().GetProperties();
 
@@ -120,8 +121,8 @@ namespace AngryMonkey.Cloud.GraphDB
         }
 
         public async Task<VertexRecord?> GetVertex(string partitionKey, Guid id)
-		{
-			StringBuilder builder = new($"g.V(\'{id}\')");
+        {
+			StringBuilder builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{partitionKey}\")");
 
 			ResultSet<dynamic> resultSet = await Client.SubmitAsync<dynamic>(builder.ToString());
 
@@ -147,8 +148,8 @@ namespace AngryMonkey.Cloud.GraphDB
 
 			foreach (var item in type)
 			{
-				Console.WriteLine($"Property Name :{item.Name}");
-				Console.WriteLine($"Property Value :{obj.GetType().GetProperty(item.Name).GetValue(obj)}");
+				//Console.WriteLine($"Property Name :{item.Name}");
+				//Console.WriteLine($"Property Value :{obj.GetType().GetProperty(item.Name).GetValue(obj)}");
 				if ((obj.GetType().GetProperty(item.Name).GetValue(obj)).ToString() != "00000000-0000-0000-0000-000000000000" && obj.GetType().GetProperty(item.Name).GetValue(obj) != null)
 					query.Append($".has(\'{item.Name}\',\'{obj.GetType().GetProperty(item.Name).GetValue(obj)}')");
 			}
@@ -165,21 +166,40 @@ namespace AngryMonkey.Cloud.GraphDB
 
 			return VR;
 		}
-        public async Task DeleteVertexProperty(Guid id,string pk, string propertyName)
+        public async Task DeleteVertexProperty(string partitionkey, Guid id, string propertyName)
         {
-            StringBuilder builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{pk}\").properties(\"{propertyName}\").drop()");
+            StringBuilder builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{partitionkey}\").properties(\"{propertyName}\").drop()");
 
             await Client.SubmitAsync<dynamic>(builder.ToString());
         }
 
-        public async Task DeleteVertexProperties(Guid id, List<GraphRecordProperty> properties)
+        public async Task DeleteVertexProperties(string partitionkey, Guid id, List<GraphRecordProperty> properties)
         {
             StringBuilder builder;
 
             foreach (GraphRecordProperty property in properties)
             {
-                builder = new($"g.V(\"{id}\").properties(\"{property.ID}\").drop()");
+                builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{partitionkey}\").properties(\"{property.ID}\").drop()");
                 await Client.SubmitAsync<dynamic>(builder.ToString());
+            }
+        }
+
+        public async Task DeleteVertexProperties<T>(string partitionkey, Guid id, T obj)
+        {
+            StringBuilder builder;
+
+            if (obj == null)
+                return;
+
+            dynamic type = obj.GetType().GetProperties();
+
+            foreach (var item in type)
+            {
+                if ((obj.GetType().GetProperty(item.Name).GetValue(obj)).ToString() != "00000000-0000-0000-0000-000000000000" && obj.GetType().GetProperty(item.Name).GetValue(obj) != null)
+                {
+                    builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{partitionkey}\").properties(\"{item.Name}\").drop()");
+                    await Client.SubmitAsync<dynamic>(builder.ToString());
+                }
             }
         }
 
@@ -199,6 +219,25 @@ namespace AngryMonkey.Cloud.GraphDB
 			{
 				builder = new($"g.E(\"{id}\").properties(\"{property.ID}\").drop()");
                 await Client.SubmitAsync<dynamic>(builder.ToString());
+            }
+        }
+
+        public async Task DeleteEdgeProperties<T>(Guid id, T obj)
+        {
+            StringBuilder builder;
+
+            if (obj == null)
+                return;
+
+            dynamic type = obj.GetType().GetProperties();
+
+            foreach (var item in type)
+            {
+                if ((obj.GetType().GetProperty(item.Name).GetValue(obj)).ToString() != "00000000-0000-0000-0000-000000000000" && obj.GetType().GetProperty(item.Name).GetValue(obj) != null)
+                {
+                    builder = new($"g.E(\"{id}\").properties(\"{item.Name}\").drop()");
+                    await Client.SubmitAsync<dynamic>(builder.ToString());
+                }
             }
         }
 
@@ -222,7 +261,7 @@ namespace AngryMonkey.Cloud.GraphDB
 			Client.SubmitAsync<dynamic>(builder.ToString());
 		}
 
-        public async Task DeleteEdge(Guid id, string pk)
+        public async Task DeleteEdge(string partitionkey, Guid id)
         {
             StringBuilder builder = new($"g.E(\"{id}\").drop()");
 
@@ -244,8 +283,8 @@ namespace AngryMonkey.Cloud.GraphDB
 
             foreach (var property in properties)
             {
-                Console.WriteLine($"Property Name :{property.Name}");
-                Console.WriteLine($"Property Value :{obj.GetType().GetProperty(property.Name).GetValue(obj)}");
+                //Console.WriteLine($"Property Name :{property.Name}");
+                //Console.WriteLine($"Property Value :{obj.GetType().GetProperty(property.Name).GetValue(obj)}");
                 if ((obj.GetType().GetProperty(property.Name).GetValue(obj)).ToString() != "00000000-0000-0000-0000-000000000000" && obj.GetType().GetProperty(property.Name).GetValue(obj) != null)
                     builder.Append($".property(\'{property.Name}\',\'{obj.GetType().GetProperty(property.Name).GetValue(obj)}')");
             }
