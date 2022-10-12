@@ -67,8 +67,14 @@ namespace GremlinBlazorSample.Pages
             CloudGraphDbClient cloudGraph = new(ConnectionString, DatabaseId, ContainerId, Host, GremlinPK);
 
             //cloudGraph.EdgeTest();
-            Guid g =new Guid("d3da1c85-a272-4c3a-8a8f-3c738b97ed2d");
-
+            Guid g =new Guid("95831405-b710-4c1c-981f-555c9c762145");
+            List<GraphRecordProperty> properties = new()
+            {
+                new(){ID = "year", Value = "5000"},
+                new(){ID = "Salary", Value = "6000"},
+                new(){ID = "HAHA", Value = "HEHE"}
+            };
+            await cloudGraph.UpdateEdgeProperties(g, properties);
             //VertexRecord v = await cloudGraph.GetVertex("Brand", g);
 
             //EdgeRecord e = cloudGraph.GetEdgebyID("95831405-b710-4c1c-981f-555c9c762145");

@@ -165,8 +165,44 @@ namespace AngryMonkey.Cloud.GraphDB
 
 			return VR;
 		}
+        public async Task DeleteVertexProperty(Guid id,string pk, string propertyName)
+        {
+            StringBuilder builder = new($"g.V(\"{id}\").has(\"PartitionKey\",\"{pk}\").properties(\"{propertyName}\").drop()");
 
-		public async Task<EdgeRecord> GetEdgebyID(string id)
+            await Client.SubmitAsync<dynamic>(builder.ToString());
+        }
+
+        public async Task DeleteVertexProperties(Guid id, List<GraphRecordProperty> properties)
+        {
+            StringBuilder builder;
+
+            foreach (GraphRecordProperty property in properties)
+            {
+                builder = new($"g.V(\"{id}\").properties(\"{property.ID}\").drop()");
+                await Client.SubmitAsync<dynamic>(builder.ToString());
+            }
+        }
+
+        public async Task DeleteEdgeProperty(Guid id, string propertyName)
+		{
+            StringBuilder builder = new($"g.E(\"{id}\").properties(\"{propertyName}\").drop()");
+
+            await Client.SubmitAsync<dynamic>(builder.ToString());
+        }
+
+
+        public async Task DeleteEdgeProperties(Guid id, List<GraphRecordProperty> properties)
+        {
+			StringBuilder builder; 
+
+			foreach (GraphRecordProperty property in properties)
+			{
+				builder = new($"g.E(\"{id}\").properties(\"{property.ID}\").drop()");
+                await Client.SubmitAsync<dynamic>(builder.ToString());
+            }
+        }
+
+        public async Task<EdgeRecord> GetEdgebyID(string id)
 		{
 			StringBuilder builder = new($"g.E(\'{id}\')");
 			var resultSet =await Client.SubmitAsync<dynamic>(builder.ToString());
@@ -218,7 +254,7 @@ namespace AngryMonkey.Cloud.GraphDB
         }
 
 
-        public async Task UpdateEdgeProperties(Guid id, string pk, List<GraphRecordProperty> properties)
+        public async Task UpdateEdgeProperties(Guid id, List<GraphRecordProperty> properties)
         {
             StringBuilder builder = new($"g.E(\"{id}\")");
 
