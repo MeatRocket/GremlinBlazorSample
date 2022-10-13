@@ -19,11 +19,31 @@ namespace AngryMonkey.Cloud.GraphDB
 
 		public List<GraphRecordProperty> Properties { get; set; } = new();
 
-		public static VertexRecord? Parse(dynamic result)
+        public static VertexRecord ConvertToVertex<T>(T res) where T : BaseVertexRecord
+        {
+			VertexRecord vertexRecord = new(res.ID, res._VertexLabel);
+
+            dynamic properties = res.GetType().GetProperties();
+
+			foreach (var property in properties)
+			{
+				if (property.Name == "ID")
+					continue;
+
+                vertexRecord.Properties.Add(new() { 
+					Name = res.GetType().GetProperty(property.Name).ToString(),
+                    Value = res.GetType().GetProperty(property.Name).GetValue(res)
+				});
+            }
+
+            return vertexRecord;
+        }
+
+        public static VertexRecord? Parse(dynamic result)
 		{
 			Dictionary<string, object>? resultproperties = result["properties"] ;
 
-			VertexRecord graphRecord = new(new Guid(result["id"]), result["label"]);
+			VertexRecord vertexRecord = new(new Guid(result["id"]), result["label"]);
 
 			foreach (var property in resultproperties)
 			{
@@ -31,14 +51,14 @@ namespace AngryMonkey.Cloud.GraphDB
 				Dictionary<string, object>? value = prop[0] as Dictionary<string, object>;
 				object value1 = value["value"];
 
-				graphRecord.Properties.Add(new()
+				vertexRecord.Properties.Add(new()
 				{
 					Name = property.Key.ToString(),
 					Value = value1.ToString()
 				});
 			}
 
-			return graphRecord;
+			return vertexRecord;
 		}
 
 		public T Parse<T>() where T : BaseVertexRecord

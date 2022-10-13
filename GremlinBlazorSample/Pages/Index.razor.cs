@@ -58,21 +58,31 @@ namespace GremlinBlazorSample.Pages
 
         public class Brand : BaseVertexRecord
         {
-            public string year { get; set; }
+            public string Year { get; set; }
             public string Salary { get; set; }
         }
 
         public async Task Add()
         {
             CloudGraphDbClient cloudGraph = new(ConnectionString, DatabaseId, ContainerId, Host, GremlinPK);
-   //         Brand brand = await cloudGraph.GetVertex<Brand>("", Guid.Empty);
+            //         Brand brand = await cloudGraph.GetVertex<Brand>("", Guid.Empty);
 
             //         VertexRecord vertex = await cloudGraph.GetVertex("", Guid.Empty);
 
             ////cloudGraph.EdgeTest();
-            Guid g =new Guid("83219638-b1f6-4783-89dc-34182c55119c");
+            //Guid g =new Guid("83219638-b1f6-4783-89dc-34182c55119c");
+            Guid g = Guid.NewGuid();
 
-            List<EdgeRecord> EGL = await cloudGraph.GetEdges(g, new() { Direction = EdgeDirection.Out});
+            Brand b = new Brand()
+            {
+                ID = g,
+                Salary = "10mil",
+                Year = "5000"
+            };
+
+
+            await cloudGraph.AddVertex("Black", b);
+            //List<EdgeRecord> EGL = await cloudGraph.GetEdges(g, new() { Direction = EdgeDirection.Out});
 
             //         List<GraphRecordProperty> properties = new()
             //         {
