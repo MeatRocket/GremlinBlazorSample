@@ -25,7 +25,7 @@ namespace AngryMonkey.Cloud.GraphDB.Classes
 
 		public List<GraphRecordProperty> Properties { get; set; } = new();
 
-		public static EdgeRecord? Parse(dynamic result)
+		public static EdgeRecord Parse(dynamic result)
 		{
 			Dictionary<string, object>? resultproperties = result["properties"] as Dictionary<string, object>;
 
@@ -35,7 +35,7 @@ namespace AngryMonkey.Cloud.GraphDB.Classes
 			{
 				edgeRecord.Properties.Add(new()
 				{
-					ID = property.Key.ToString(),
+					Name = property.Key.ToString(),
 					Value = property.Value.ToString()
 				});
 			}
@@ -51,7 +51,7 @@ namespace AngryMonkey.Cloud.GraphDB.Classes
 
             foreach (GraphRecordProperty graphProperty in Properties)
             {
-                PropertyInfo? propertyInfo = typeof(T).GetProperty(graphProperty.ID);
+                PropertyInfo? propertyInfo = typeof(T).GetProperty(graphProperty.Name);
 
                 if (propertyInfo != null)
                     propertyInfo.SetValue(obj, graphProperty.Value);

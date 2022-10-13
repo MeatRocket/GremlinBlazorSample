@@ -33,7 +33,7 @@ namespace AngryMonkey.Cloud.GraphDB
 
 				graphRecord.Properties.Add(new()
 				{
-					ID = property.Key.ToString(),
+					Name = property.Key.ToString(),
 					Value = value1.ToString()
 				});
 			}
@@ -49,7 +49,7 @@ namespace AngryMonkey.Cloud.GraphDB
 
 			foreach (GraphRecordProperty graphProperty in Properties)
 			{
-				PropertyInfo? propertyInfo = typeof(T).GetProperty(graphProperty.ID);
+				PropertyInfo? propertyInfo = typeof(T).GetProperty(graphProperty.Name);
 
 				if (propertyInfo != null)
                     propertyInfo.SetValue(obj, graphProperty.Value);
