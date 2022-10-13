@@ -1,4 +1,6 @@
-﻿namespace AngryMonkey.Cloud.GraphDB
+﻿using AngryMonkey.Cloud.GraphDB.Classes;
+
+namespace AngryMonkey.Cloud.GraphDB
 {
 	public class EdgesRequestOption
 	{
