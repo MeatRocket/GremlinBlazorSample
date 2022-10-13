@@ -65,22 +65,24 @@ namespace GremlinBlazorSample.Pages
         public async Task Add()
         {
             CloudGraphDbClient cloudGraph = new(ConnectionString, DatabaseId, ContainerId, Host, GremlinPK);
+   //         Brand brand = await cloudGraph.GetVertex<Brand>("", Guid.Empty);
 
-            Brand brand = await cloudGraph.GetVertex<Brand>("", Guid.Empty);
+            //         VertexRecord vertex = await cloudGraph.GetVertex("", Guid.Empty);
 
-            VertexRecord vertex = await cloudGraph.GetVertex("", Guid.Empty);
+            ////cloudGraph.EdgeTest();
+            Guid g =new Guid("83219638-b1f6-4783-89dc-34182c55119c");
 
-			//cloudGraph.EdgeTest();
-			Guid g =new Guid("95831405-b710-4c1c-981f-555c9c762145");
-            List<GraphRecordProperty> properties = new()
-            {
-                new(){ID = "year", Value = "5000"},
-                new(){ID = "Salary", Value = "6000"},
-                new(){ID = "HAHA", Value = "HEHE"}
-            };
+            List<EdgeRecord> EGL = await cloudGraph.GetOutEdges(g);
 
-            Brand b = new() { year = "123", Salary = "222" };
-            await cloudGraph.UpdateEdgeProperties<Brand>(g, b);
+            //         List<GraphRecordProperty> properties = new()
+            //         {
+            //             new(){ID = "year", Value = "5000"},
+            //             new(){ID = "Salary", Value = "6000"},
+            //             new(){ID = "HAHA", Value = "HEHE"}
+            //         };
+
+            //         Brand b = new() { year = "123", Salary = "222" };
+            //         await cloudGraph.UpdateEdgeProperties<Brand>(g, b);
             //VertexRecord v = await cloudGraph.GetVertex("Brand", g);
 
             //EdgeRecord e = cloudGraph.GetEdgebyID("95831405-b710-4c1c-981f-555c9c762145");
