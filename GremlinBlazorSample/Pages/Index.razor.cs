@@ -27,131 +27,201 @@ namespace GremlinBlazorSample.Pages
         protected Container Container { get; set; }
         string containerLink = "/dbs/" + DatabaseId + "/colls/" + ContainerId;
 
-        //public string GenerateID(string label)
-        //{
-        //    Guid Id = new();
-        //    return label + Id;
-        //}
-        //bool Started { get; set; } = false;
+        private string? VertexLabel;
+        private string? Response;
+        private string? VertexPK;
+        private string? VertexID;
+        private string? EdgePK, EdgeID;
+        private string VertexOutID, VertexInID;
+        private string? Val1, Val2, Val3, Val4;
+        private VertexRecord? Vertex;
+        private static List<GraphRecordProperty> Properties = new()
+        {
+            new()
+        };
+        IQueryable<GraphRecordProperty>? PropertiesRecords;
 
-        //private static bool EnableSSL
-        //{
-        //    get
-        //    {
-        //        if (Environment.GetEnvironmentVariable("EnableSSL") == null)
-        //            return true;
+        private List<GraphRecordProperty> UpdateProperties = new()
+        {
+            new()
+        };
 
-        //        if (!bool.TryParse(Environment.GetEnvironmentVariable("EnableSSL"), out bool value))
-        //            throw new ArgumentException("Invalid env var: EnableSSL is not a boolean");
-
-        //        return value;
-        //    }
-        //}
-
-        //ConnectionPoolSettings connectionPoolSettings = new()
-        //{
-        //    MaxInProcessPerConnection = 10,
-        //    PoolSize = 30,
-        //    ReconnectionAttempts = 3,
-        //    ReconnectionBaseDelay = TimeSpan.FromMilliseconds(500)
-        //};
+        public class Knows
+        {
+            public string Name { get; set; }
+            public string Employees { get; set; }
+        }
 
         public class Brand : BaseVertexRecord
         {
-            public string Year { get; set; }
-            public string Salary { get; set; }
+            public string Name { get; set; }
+            public string Employees { get; set; }
         }
 
-        public async Task Add()
+        public class Person : BaseVertexRecord
+        {
+            public string Knows { get; set; }
+            public string Loves { get; set; }
+
+            public string Kills { get; set; }
+        }
+
+        public void AddProperty(List<GraphRecordProperty> properties)
+        {
+            properties.Add(new());
+        }
+
+        //public async Task Add()
+        //{
+        //    CloudGraphDbClient cloudGraph = new(ConnectionString, DatabaseId, ContainerId, Host, GremlinPK);
+        //    Guid g = Guid.NewGuid();
+
+        //    Brand b = new Brand()
+        //    {
+        //        ID = g,
+        //        Salary = "10mil",
+        //        Year = "5000"
+        //    };
+
+        //    await cloudGraph.AddVertex("Black", b);
+
+        //}
+
+        public async Task CreateVertex()
         {
             CloudGraphDbClient cloudGraph = new(ConnectionString, DatabaseId, ContainerId, Host, GremlinPK);
-            //         Brand brand = await cloudGraph.GetVertex<Brand>("", Guid.Empty);
-
-            //         VertexRecord vertex = await cloudGraph.GetVertex("", Guid.Empty);
-
-            ////cloudGraph.EdgeTest();
-            //Guid g =new Guid("83219638-b1f6-4783-89dc-34182c55119c");
             Guid g = Guid.NewGuid();
+            VertexRecord v = new VertexRecord(g, VertexLabel);
 
-            Brand b = new Brand()
+            v.Properties = Properties;
+
+            try
             {
-                ID = g,
-                Salary = "10mil",
-                Year = "5000"
-            };
+                await cloudGraph.AddVertex(VertexLabel, v);
+                Response = "Success!";
+            }
+            catch (Exception)
+            {
+                Response = "An Error Accured";
+                throw;
+            }
+        }
 
-
-            await cloudGraph.AddVertex("Black", b);
-            //List<EdgeRecord> EGL = await cloudGraph.GetEdges(g, new() { Direction = EdgeDirection.Out});
-
-            //         List<GraphRecordProperty> properties = new()
-            //         {
-            //             new(){ID = "year", Value = "5000"},
-            //             new(){ID = "Salary", Value = "6000"},
-            //             new(){ID = "HAHA", Value = "HEHE"}
-            //         };
-
-            //         Brand b = new() { year = "123", Salary = "222" };
-            //         await cloudGraph.UpdateEdgeProperties<Brand>(g, b);
-            //VertexRecord v = await cloudGraph.GetVertex("Brand", g);
-
-            //EdgeRecord e = cloudGraph.GetEdgebyID("95831405-b710-4c1c-981f-555c9c762145");
-
-            //await cloudGraph.AddVertex(new Brand()
-            //{
-            //    ID = g,
-            //    Name = "XBOXx",
-            //    Country = "Test"
-            //});
-
-            //Console.WriteLine();
-
-            ////List<GraphRecordProperty> gp = new()
-            ////{
-            ////    new(){ID = "HAHA", Value="Hehe"},
-            ////    new(){ID = "Country", Value="Hawai"}
-            ////};
-            //Brand b = new()
-            //{
-            //    Name = "Apple",
-            //    Country = "Canada"
-            //};
-            //cloudGraph.UpdateVertexProperty<Brand>(g,"Brand", b);
-            //VertexRecord vertex1 = await cloudGraph.GetVertex("Brand",g);
-
-            //List <VertexRecord> vertexRecords = cloudGraph.FindVerticiesByAnyProperty(new Brand()
-            //{
-            //	Name = "Microsoft"
-            //         });
-
-            //EdgeRecord edge1 = cloudGraph.GetEdgebyID("95831405-b710-4c1c-981f-555c9c762145");
-
+        public void CastToGrid()
+        {
 
         }
 
-        //private static string PrintStatusAttributes(IReadOnlyDictionary<string, object> attributes)
-        //{
-        //    return
-        //    $"\tStatusAttributes:" +
-        //    $"\t[\" Status Code :  {GetValueAsString(attributes, "x-ms-status-code")}\"]" +
-        //    $"\t[\" Total Time: {GetValueAsString(attributes, "x-ms-total-server-time-ms")}\"]" +
-        //    $"\t[\" RU Cost : {GetValueAsString(attributes, "x-ms-total-request-charge")}\"] ";
-        //}
+        public async Task DeleteVertex()
+        {
+            try
+            {
+                CloudGraphDbClient cloudGraph = new(ConnectionString, DatabaseId, ContainerId, Host, GremlinPK);
+                await cloudGraph.DeleteVertex(VertexPK, Guid.Parse(VertexID));
+                Response = "Deleted Successfully";
+            }
+            catch (Exception)
+            {
+                Response = "an error accured";
+                throw;
+            }
+        }
 
-        //public static string GetValueAsString(IReadOnlyDictionary<string, object> dictionary, string key)
-        //{
-        //    return JsonConvert.SerializeObject(GetValueOrDefault(dictionary, key));
-        //}
+        public async Task UpdateVertexProperties()
+        {
+            try
+            {
+                CloudGraphDbClient cloudGraph = new(ConnectionString, DatabaseId, ContainerId, Host, GremlinPK);
+                await cloudGraph.UpdateVertexProperties(VertexPK, Guid.Parse(VertexID), UpdateProperties);
+                Response = "Updated Successfully";
+            }
+            catch (Exception)
+            {
+                Response = "an error accured";
+                throw;
+            }
+        }
 
-        //public static object GetValueOrDefault(IReadOnlyDictionary<string, object> dictionary, string key)
+        public async Task FindVertex()
+        {
+            try
+            {
+                CloudGraphDbClient cloudGraph = new(ConnectionString, DatabaseId, ContainerId, Host, GremlinPK);
+                Vertex = await cloudGraph.GetVertex(VertexPK, Guid.Parse(VertexID));
+                Response = "Vertex Found";
+            }
+            catch (Exception)
+            {
+                Response = "an error accured";
+                throw;
+            }
+        }
+
+        public async Task CreateBrand()
+        {
+            Guid g = Guid.NewGuid();
+            try
+            {
+                CloudGraphDbClient cloudGraph = new(ConnectionString, DatabaseId, ContainerId, Host, GremlinPK);
+                await cloudGraph.AddVertex<Brand>("Brand", new() { ID = g, Name = Val1, Employees = Val2 });
+                Response = "Brand Created";
+            }
+            catch (Exception)
+            {
+                Response = "an error accured";
+                throw;
+            }
+        }
+
+        //public async Task CreatePerson()
         //{
-        //    if (dictionary.ContainsKey(key))
+        //    Guid g = Guid.NewGuid();
+        //    try
         //    {
-        //        return dictionary[key];
+        //        CloudGraphDbClient cloudGraph = new(ConnectionString, DatabaseId, ContainerId, Host, GremlinPK);
+        //        await cloudGraph.AddVertex<Person>("Person", new() { FirstName = Val1, ID = g, LastName = Val2, Age = Val3 });
+        //        Response = "Person Created !";
         //    }
-
-        //    return null;
+        //    catch (Exception)
+        //    {
+        //        Response = "an error accured";
+        //        throw;
+        //    }
         //}
 
+
+
+        public async Task CreateEdge()
+        {
+            Guid g = Guid.NewGuid();
+
+            try
+            {
+                CloudGraphDbClient cloudGraph = new(ConnectionString, DatabaseId, ContainerId, Host, GremlinPK);
+                await cloudGraph.AddEdge<Person>(new Person() { Knows = Val1, Kills = Val2, Loves = Val3, ID = g }, Guid.Parse(VertexInID), Guid.Parse(VertexOutID));
+                Response = "Edge Created !";
+            }
+            catch (Exception)
+            {
+                Response = "an error accured";
+                throw;
+            }
+        }
+
+        public async Task DeleteEdge()
+        {
+            try
+            {
+                CloudGraphDbClient cloudGraph = new(ConnectionString, DatabaseId, ContainerId, Host, GremlinPK);
+                await cloudGraph.DeleteEdge(Guid.Parse(EdgeID));
+                Response = "Edge Deleted !";
+            }
+            catch (Exception)
+            {
+                Response = "an error accured";
+
+            }
+
+        }
     }
 }

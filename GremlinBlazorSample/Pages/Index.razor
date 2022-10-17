@@ -1,7 +1,142 @@
 ﻿@page "/"
+@using AngryMonkey.Cloud.GraphDB
+@using Microsoft.AspNetCore.Components.QuickGrid
 
 <PageTitle>Sample Test</PageTitle>
+<h1> Create New Vertex</h1>
+<br />
 
-<button @onclick=Add>
-    Add
-</button>
+<p> Vertex Label</p>
+<input type="text" @bind-value=VertexLabel />
+
+<br />
+<button @onclick="() => AddProperty(Properties)">Add Property</button>
+
+@foreach (GraphRecordProperty c in Properties)
+{
+    <p> Vertex Property Name</p>
+    <input type="text" @bind-value=c.Name />
+    <p> Vertex Property Value</p>
+    <input type="text" @bind-value=c.Value />
+}
+
+<br />
+<button @onclick=CreateVertex>Create</button>
+<p> @Response</p>
+
+<h1> Update Vertex properties</h1>
+<br />
+
+<p> Vertex Partition Key</p>
+<input type="text" @bind-value=VertexPK />
+
+<p> Vertex ID</p>
+<input type="text" @bind-value=VertexID />
+
+<br />
+<button @onclick="() => AddProperty(UpdateProperties)">Add Property</button>
+
+@foreach (GraphRecordProperty c in UpdateProperties)
+{
+    <p> Vertex Property Name</p>
+    <input type="text" @bind-value=c.Name />
+    <p> Vertex Property Value</p>
+    <input type="text" @bind-value=c.Value />
+}
+
+<br />
+<button @onclick=UpdateVertexProperties>Update</button>
+<p> @Response</p>
+
+<h1> Find Vertex</h1>
+<p> Vertex Partition Key</p>
+<input type="text" @bind-value=VertexPK />
+
+<p> Vertex ID</p>
+<input type="text" @bind-value=VertexID />
+<button @onclick=FindVertex>Find</button>
+<p> @Response</p>
+@if (Vertex != null)
+{
+    <p>Vertex ID:@Vertex.ID</p>
+    <p>Vertex Label: @Vertex.Label</p>
+    <p>Vertex PartitionKey: @Vertex.Label</p>
+    <br />
+    <p>Vertex Properties:</p>
+
+    @foreach (GraphRecordProperty property in Vertex.Properties)
+    {
+        <p>Property Name: @property.Name Property Value: @property.Value</p>
+    }
+}
+
+@*<h1> Grid Test </h1>
+
+<button @onclick=CastToGrid>Find</button>
+
+<QuickGrid Items="@PropertiesRecords">
+    <PropertyColumn Property="@(p => p.Name)" Sortable="true" />
+    <PropertyColumn Property="@(p => p.Value)" Sortable="true" />
+</QuickGrid>*@
+
+<h1>Delete Vertex</h1>
+
+<p> Vertex Partition Key</p>
+<input type="text" @bind-value=VertexPK />
+
+<p> Vertex ID</p>
+<input type="text" @bind-value=VertexID />
+<button @onclick=DeleteVertex>Delete</button>
+<p> @Response</p>
+
+<h1> Create New Brand</h1>
+<br />
+<p> Number of employees</p>
+<input type="text" @bind-value=Val1 />
+<p>Salary</p>
+<input type="text" @bind-value=Val2 />
+
+<button @onclick=CreateBrand>Create</button>
+<p> @Response</p>
+
+
+
+@*<h1> Create New Person</h1>
+<br />
+
+<p>FirstName</p>
+<input type="text" @bind-value=Val1 />
+<p>LastName</p>
+<input type="text" @bind-value=Val2 />
+<p>Age</p>
+<input type="text" @bind-value=Val3 />
+<button @onclick=CreatePerson>Create</button>
+<p> @Response</p>
+*@
+
+<h1> Create New Edge</h1>
+<br />
+
+<p> Vertex Out ID</p>
+<input type="text" @bind-value=VertexOutID />
+<p> Vertex In ID</p>
+<input type="text" @bind-value=VertexInID />
+<br />
+
+<p>prop1</p>
+<input type="text" @bind-value=Val1 />
+<p>prop2</p>
+<input type="text" @bind-value=Val2 />
+<p>prop3</p>
+<input type="text" @bind-value=Val3 />
+
+<br />
+<button @onclick=CreateEdge>Create</button>
+<p> @Response</p>
+
+<h1>Delete Edge</h1>
+
+<p> Edge ID</p>
+<input type="text" @bind-value=EdgeID />
+<button @onclick=DeleteEdge>Delete</button>
+<p> @Response</p>

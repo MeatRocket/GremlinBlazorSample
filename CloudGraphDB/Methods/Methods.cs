@@ -340,7 +340,7 @@ namespace AngryMonkey.Cloud.GraphDB
             return EdgeRecord.Parse(r);
         }
 
-        public void AddEdge<T>(T edgeProperties, Guid inVID, Guid outVID) where T : BaseVertexRecord
+        public async Task AddEdge<T>(T edgeProperties, Guid inVID, Guid outVID) where T : BaseVertexRecord
         {
             StringBuilder builder = new($"g.V(\"{outVID}\").as('a').V(\"{inVID}\").as('b').addE(\"{edgeProperties._VertexLabel}\").from('a').to('b')");
 
@@ -348,10 +348,11 @@ namespace AngryMonkey.Cloud.GraphDB
                 if (propertyInfo.GetValue(edgeProperties) != null)
                     builder.Append($".property('{propertyInfo.Name}', '{propertyInfo.GetValue(edgeProperties)}')");
 
-            Client.SubmitAsync<dynamic>(builder.ToString());
+           await Client.SubmitAsync<dynamic>(builder.ToString());
         }
 
-        public async Task DeleteEdge(string partitionkey, Guid id)
+
+        public async Task DeleteEdge(Guid id)
         {
             await Client.SubmitAsync<dynamic>($"g.E(\"{id}\").drop()");
         }

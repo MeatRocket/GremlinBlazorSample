@@ -30,8 +30,10 @@ namespace AngryMonkey.Cloud.GraphDB
 				if (property.Name == "ID")
 					continue;
 
-                vertexRecord.Properties.Add(new() { 
-					Name = res.GetType().GetProperty(property.Name).ToString(),
+                vertexRecord.Properties.Add(new() {
+                    //Name = res.GetType().GetProperty(property.Name).ToString(),
+
+                    Name = property.Name,
                     Value = res.GetType().GetProperty(property.Name).GetValue(res)
 				});
             }
